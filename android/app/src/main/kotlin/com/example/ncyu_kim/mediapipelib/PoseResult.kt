@@ -14,11 +14,9 @@ class PoseResult(private val result: PoseLandmarkerResult) {
         }
         val kpt = landmarks[0][idx]
         val pos = if (!get3d) {
-            // 2D normalized landmark
             val lmk = kpt as NormalizedLandmark
             listOf(lmk.x().toDouble(), lmk.y().toDouble())
         } else {
-            // 3D world landmark
             val lmk = kpt as Landmark
             listOf(lmk.x().toDouble(), lmk.y().toDouble(), lmk.z().toDouble())
         }

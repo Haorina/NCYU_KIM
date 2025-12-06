@@ -101,3 +101,4 @@ class VideoProcessorPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         try { processor.close() } catch (e: Exception) { Log.w("VideoProcessorPlugin", "Close error on detach: ${e.message}") }
     }
 }
+
