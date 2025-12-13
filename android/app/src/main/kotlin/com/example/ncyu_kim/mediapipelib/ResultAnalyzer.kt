@@ -2,18 +2,20 @@ package com.example.ncyu_kim.mediapipelib
 
 import android.util.Log
 import kotlin.math.abs
-import kotlin.math.sqrt
 import kotlin.math.pow
-
+import kotlin.math.sqrt
 
 class ResultAnalyzer(private val poseResult: PoseResult) {
-    fun getLhcLabel(get3d: Boolean = false): String {
-        val angleDict = getAllJointAnglesByName(get3d)
+
+    // ===== Python: get_all_joint_angles_by_name + angles_to_lhc_label =====
+    fun getLhcLabel(): String {
+        val angleDict = getAllJointAnglesByName()
         return anglesToLhcLabel(angleDict)
     }
 
     private fun anglesToLhcLabel(angles: Map<String, Double>): String {
         if (angles.isEmpty()) return ""
+
         val leftKnee = angles["left_knee"] ?: 180.0
         val rightKnee = angles["right_knee"] ?: 180.0
         val leftHip = angles["left_hip"] ?: 180.0
@@ -21,6 +23,7 @@ class ResultAnalyzer(private val poseResult: PoseResult) {
         val leftShoulder = angles["left_shoulder"] ?: 0.0
         val rightShoulder = angles["right_shoulder"] ?: 0.0
 
+        // 完整對齊 Python calculator.py: angles_to_lhc_label
         return when {
             leftKnee <= 30.0 || rightKnee <= 30.0 -> "A5-3"
             leftKnee <= 45.0 || rightKnee <= 45.0 -> "A5-2"
@@ -29,18 +32,21 @@ class ResultAnalyzer(private val poseResult: PoseResult) {
             leftHip <= 120.0 || rightHip <= 120.0 -> "A4-1"
             leftHip <= 140.0 || rightHip <= 140.0 -> "A3-2"
             leftHip <= 160.0 || rightHip <= 160.0 -> "A3-1"
-            leftShoulder > 90.0 || rightShoulder > 90.0 -> "A2"
+            // Python: left_shoulder > 90 and right_shoulder > 90
+            leftShoulder > 90.0 && rightShoulder > 90.0 -> "A2"
             else -> "A1"
         }
     }
 
-    fun getAllJointAnglesByName(get3d: Boolean = false): Map<String, Double> {
+    fun getAllJointAnglesByName(): Map<String, Double> {
         val allAngles = mutableMapOf<String, Double>()
         for ((center, pair) in JOINT_NAME_DICT) {
-            val pos1 = poseResult.getKptPosByName(pair[0], get3d)
-            val pos2 = poseResult.getKptPosByName(pair[1], get3d)
-            val centerPos = poseResult.getKptPosByName(center, get3d)
-            if (pos1 != null && pos2 != null && centerPos != null) {
+            val pos1 = poseResult.getKptPosByName(pair[0])
+            val pos2 = poseResult.getKptPosByName(pair[1])
+            val centerPos = poseResult.getKptPosByName(center)
+            if (pos1 != null && pos2 != null && centerPos != null &&
+                pos1.size >= 3 && pos2.size >= 3 && centerPos.size >= 3
+            ) {
                 val angle = Calculator.getAngleBy3Points(pos1, pos2, centerPos)
                 allAngles[center] = angle
             }
@@ -48,98 +54,161 @@ class ResultAnalyzer(private val poseResult: PoseResult) {
         return allAngles
     }
 
-    fun checkIfTrunkIsTwistedOrLateralInclination(get3d: Boolean = false): Boolean {
-        return checkIfTrunkIsTwisted(get3d) || checkIfTrunkIsLateralInclination(get3d)
-    }
-
-    fun checkIfTrunkIsTwisted(get3d: Boolean = false): Boolean {
-        val angleXZ = getPoseShoulderHipStaggeredAngleXZ()
-        Log.d("ResultAnalyzer", "Trunk twisted angle XZ: $angleXZ")
-        return angleXZ > 15.0
-    }
-
-    fun checkIfTrunkIsLateralInclination(get3d: Boolean = false): Boolean {
-        val leftShoulder = poseResult.getKptPosByName("left_shoulder", true)
-        val rightShoulder = poseResult.getKptPosByName("right_shoulder", true)
-        if (leftShoulder == null || rightShoulder == null) return false
-
-        // 確保使用絕對值（與 Python 一致）
-        val diff = abs(leftShoulder[1] - rightShoulder[1])
-        Log.d("ResultAnalyzer", "Lateral inclination diff: $diff")
-        return diff > 0.06
-    }
-
-    fun checkIfHandsAtADistance(get3d: Boolean = false): Boolean {
-        val leftWrist = poseResult.getKptPosByName("left_wrist", true)
-        val rightWrist = poseResult.getKptPosByName("right_wrist", true)
-        val leftHip = poseResult.getKptPosByName("left_hip", true)
-        val rightHip = poseResult.getKptPosByName("right_hip", true)
-        if (leftWrist == null || rightWrist == null || leftHip == null || rightHip == null) return false
-
-        val gravityX = (leftHip[0] + rightHip[0]) / 2.0
-        val gravityZ = (leftHip[2] + rightHip[2]) / 2.0
-
-        val leftDist = sqrt((leftWrist[0] - gravityX).pow(2) + (leftWrist[2] - gravityZ).pow(2))
-        val rightDist = sqrt((rightWrist[0] - gravityX).pow(2) + (rightWrist[2] - gravityZ).pow(2))
-
-        Log.d("ResultAnalyzer", "Hands at distance - left: $leftDist, right: $rightDist")
-        return leftDist > 0.4 || rightDist > 0.4
-    }
-
-    fun checkIfArmsRaised(get3d: Boolean = false): Boolean {
-        fun isRaised(side: String): Boolean {
-            val shoulderAngle = getJointAngleByName("${side}_shoulder", get3d)
-            val shoulderY = poseResult.getKptPosByName("${side}_shoulder", get3d)?.getOrNull(1) ?: return false
-            val elbowY = poseResult.getKptPosByName("${side}_elbow", get3d)?.getOrNull(1) ?: return false
-            val wristY = poseResult.getKptPosByName("${side}_wrist", get3d)?.getOrNull(1) ?: return false
-
-            // 修改：Y 軸反轉後再比較（與 Python 一致）
-            val shoulderYInv = shoulderY * -1
-            val elbowYInv = elbowY * -1
-            val wristYInv = wristY * -1
-
-            val result = shoulderAngle > 60.0 && shoulderYInv > wristYInv && wristYInv > elbowYInv
-            Log.d("ResultAnalyzer", "Arms raised check ($side): angle=$shoulderAngle, shoulderY=$shoulderYInv, elbowY=$elbowYInv, wristY=$wristYInv, result=$result")
-            return result
-        }
-        return isRaised("left") || isRaised("right")
-    }
-
-    fun checkIfHandsAboveShoulder(get3d: Boolean = false): Boolean {
-        val lw = poseResult.getKptPosByName("left_wrist", get3d)?.getOrNull(1) ?: return false
-        val ls = poseResult.getKptPosByName("left_shoulder", get3d)?.getOrNull(1) ?: return false
-        val rw = poseResult.getKptPosByName("right_wrist", get3d)?.getOrNull(1) ?: return false
-        val rs = poseResult.getKptPosByName("right_shoulder", get3d)?.getOrNull(1) ?: return false
-
-        // 修改：Y 軸反轉後再比較（與 Python 一致）
-        val lwInv = lw * -1
-        val lsInv = ls * -1
-        val rwInv = rw * -1
-        val rsInv = rs * -1
-
-        val result = lwInv > lsInv || rwInv > rsInv
-        Log.d("ResultAnalyzer", "Hands above shoulder - left: $lwInv > $lsInv = ${lwInv > lsInv}, right: $rwInv > $rsInv = ${rwInv > rsInv}, result=$result")
-        return result
-    }
-
-    private fun getJointAngleByName(centerJointName: String, get3d: Boolean = false): Double {
+    fun getJointAngleByName(centerJointName: String): Double {
         val pair = JOINT_NAME_DICT[centerJointName] ?: return 0.0
-        val pos1 = poseResult.getKptPosByName(pair[0], get3d) ?: return 0.0
-        val pos2 = poseResult.getKptPosByName(pair[1], get3d) ?: return 0.0
-        val center = poseResult.getKptPosByName(centerJointName, get3d) ?: return 0.0
-
+        val pos1 = poseResult.getKptPosByName(pair[0]) ?: return 0.0
+        val pos2 = poseResult.getKptPosByName(pair[1]) ?: return 0.0
+        val center = poseResult.getKptPosByName(centerJointName) ?: return 0.0
         return Calculator.getAngleBy3Points(pos1, pos2, center)
     }
 
-    private fun getPoseShoulderHipStaggeredAngleXZ(): Double {
-        val sl = poseResult.getKptPosByName("left_shoulder", true) ?: return 0.0
-        val sr = poseResult.getKptPosByName("right_shoulder", true) ?: return 0.0
-        val hl = poseResult.getKptPosByName("left_hip", true) ?: return 0.0
-        val hr = poseResult.getKptPosByName("right_hip", true) ?: return 0.0
+    // ===== Python: get_center_position_by_2_hand =====
+    fun getCenterPositionBy2Hand(): List<Double> {
+        val leftHand = poseResult.getKptPosByName("left_wrist") ?: return emptyList()
+        val rightHand = poseResult.getKptPosByName("right_wrist") ?: return emptyList()
+        if (leftHand.size < 3 || rightHand.size < 3) return emptyList()
+        return listOf(
+            (leftHand[0] + rightHand[0]) / 2.0,
+            (leftHand[1] + rightHand[1]) / 2.0,
+            (leftHand[2] + rightHand[2]) / 2.0
+        )
+    }
+
+    // ===== Python: get_body_gravity_position =====
+    fun getBodyGravityPosition(): List<Double> {
+        val leftShoulder = poseResult.getKptPosByName("left_shoulder") ?: return emptyList()
+        val rightShoulder = poseResult.getKptPosByName("right_shoulder") ?: return emptyList()
+        val leftHip = poseResult.getKptPosByName("left_hip") ?: return emptyList()
+        val rightHip = poseResult.getKptPosByName("right_hip") ?: return emptyList()
+        if (leftShoulder.size < 3 || rightShoulder.size < 3 || leftHip.size < 3 || rightHip.size < 3) return emptyList()
+
+        val centerHip = listOf(
+            (leftHip[0] + rightHip[0]) / 2.0,
+            (leftHip[1] + rightHip[1]) / 2.0,
+            (leftHip[2] + rightHip[2]) / 2.0
+        )
+
+        return Calculator.getTriangleGravityPosition(leftShoulder, rightShoulder, centerHip)
+    }
+
+    // ===== Python: get_pose_shoulder_hip_staggered_angle_xz =====
+    fun getPoseShoulderHipStaggeredAngleXZ(): Double {
+        val sl = poseResult.getKptPosByName("left_shoulder") ?: return 0.0
+        val sr = poseResult.getKptPosByName("right_shoulder") ?: return 0.0
+        val hl = poseResult.getKptPosByName("left_hip") ?: return 0.0
+        val hr = poseResult.getKptPosByName("right_hip") ?: return 0.0
+        if (sl.size < 3 || sr.size < 3 || hl.size < 3 || hr.size < 3) return 0.0
 
         val shoulderVec = listOf(listOf(sl[0], sl[2]), listOf(sr[0], sr[2]))
         val hipVec = listOf(listOf(hl[0], hl[2]), listOf(hr[0], hr[2]))
-
         return Calculator.getAngleBetweenTwoLinesPosition(shoulderVec, hipVec)
+    }
+
+    // ===== Python: get_pose_hip_knee_staggered_angle_xz =====
+    fun getPoseHipKneeStaggeredAngleXZ(): Double {
+        val hl = poseResult.getKptPosByName("left_hip") ?: return 0.0
+        val hr = poseResult.getKptPosByName("right_hip") ?: return 0.0
+        val kl = poseResult.getKptPosByName("left_knee") ?: return 0.0
+        val kr = poseResult.getKptPosByName("right_knee") ?: return 0.0
+        if (hl.size < 3 || hr.size < 3 || kl.size < 3 || kr.size < 3) return 0.0
+
+        val hipVec = listOf(listOf(hl[0], hl[2]), listOf(hr[0], hr[2]))
+        val kneeVec = listOf(listOf(kl[0], kl[2]), listOf(kr[0], kr[2]))
+        return Calculator.getAngleBetweenTwoLinesPosition(hipVec, kneeVec)
+    }
+
+    // ===== Python: get_two_hands_center_to_gravity_dist =====
+    fun getTwoHandsCenterToGravityDist(): Double {
+        val hand = getCenterPositionBy2Hand()
+        val gravity = getBodyGravityPosition()
+        if (hand.size < 3 || gravity.size < 3) return 0.0
+        return Calculator.getDistBetweenPoints(hand, gravity)
+    }
+
+    // ===== Python: check_if_trunk_is_twisted_or_lateral_inclination =====
+    fun checkIfTrunkIsTwistedOrLateralInclination(): Boolean {
+        return checkIfTrunkIsTwisted() || checkIfTrunkIsLateralInclination()
+    }
+
+    // ===== Python: check_if_trunk_is_twisted (TWISTED_ANGLE=30, shoulder-hip OR hip-knee) =====
+    fun checkIfTrunkIsTwisted(): Boolean {
+        val TWISTED_ANGLE = 30.0
+        val a1 = getPoseShoulderHipStaggeredAngleXZ()
+        val a2 = getPoseHipKneeStaggeredAngleXZ()
+        Log.d("ResultAnalyzer", "Trunk twisted angles: shoulder-hip=$a1, hip-knee=$a2")
+        return (a1 > TWISTED_ANGLE) || (a2 > TWISTED_ANGLE)
+    }
+
+    // ===== Python: check_if_trunk_is_lateral_inclination (HEIGHT_DIFF=0.6) =====
+    fun checkIfTrunkIsLateralInclination(): Boolean {
+        val HEIGHT_DIFF = 0.6
+        val sl = poseResult.getKptPosByName("left_shoulder") ?: return false
+        val sr = poseResult.getKptPosByName("right_shoulder") ?: return false
+        if (sl.size < 3 || sr.size < 3) return false
+
+        val shoulderDiff = abs(sl[1] - sr[1]) // Python np.linalg.norm(scalar) == abs
+        Log.d("ResultAnalyzer", "Lateral inclination shoulderDiff=$shoulderDiff (threshold=$HEIGHT_DIFF)")
+        return shoulderDiff > HEIGHT_DIFF
+    }
+
+    // ===== Python: check_if_hands_at_a_distance (DIST=0.4, wrist-to-body-gravity 3D norm) =====
+    fun checkIfHandsAtADistance(): Boolean {
+        val DIST = 0.4
+        val gravity = getBodyGravityPosition()
+        val wl = poseResult.getKptPosByName("left_wrist") ?: return false
+        val wr = poseResult.getKptPosByName("right_wrist") ?: return false
+        if (gravity.size < 3 || wl.size < 3 || wr.size < 3) return false
+
+        val leftDist = l2Norm3(wl, gravity)
+        val rightDist = l2Norm3(wr, gravity)
+
+        Log.d("ResultAnalyzer", "Hands at distance: left=$leftDist, right=$rightDist, threshold=$DIST")
+        return (leftDist > DIST) || (rightDist > DIST)
+    }
+
+    // ===== Python: check_if_arms_raised =====
+    fun checkIfArmsRaised(): Boolean {
+        val RAISED_ANGLE = 60.0
+
+        fun isRaised(side: String): Boolean {
+            val shoulderAngle = getJointAngleByName("${side}_shoulder")
+            val shoulderY = poseResult.getKptPosByName("${side}_shoulder")?.getOrNull(1) ?: return false
+            val elbowY = poseResult.getKptPosByName("${side}_elbow")?.getOrNull(1) ?: return false
+            val wristY = poseResult.getKptPosByName("${side}_wrist")?.getOrNull(1) ?: return false
+
+            val shoulderYInv = -shoulderY
+            val elbowYInv = -elbowY
+            val wristYInv = -wristY
+
+            val ok = (shoulderAngle > RAISED_ANGLE) && (shoulderYInv > wristYInv) && (wristYInv > elbowYInv)
+            Log.d("ResultAnalyzer", "ArmsRaised($side): angle=$shoulderAngle, yInv(S,W,E)=($shoulderYInv,$wristYInv,$elbowYInv) -> $ok")
+            return ok
+        }
+
+        return isRaised("left") || isRaised("right")
+    }
+
+    // ===== Python: check_if_hands_above_shoulder =====
+    fun checkIfHandsAboveShoulder(): Boolean {
+        val lw = poseResult.getKptPosByName("left_wrist")?.getOrNull(1) ?: return false
+        val ls = poseResult.getKptPosByName("left_shoulder")?.getOrNull(1) ?: return false
+        val rw = poseResult.getKptPosByName("right_wrist")?.getOrNull(1) ?: return false
+        val rs = poseResult.getKptPosByName("right_shoulder")?.getOrNull(1) ?: return false
+
+        val lwInv = -lw
+        val lsInv = -ls
+        val rwInv = -rw
+        val rsInv = -rs
+
+        val ok = (lwInv > lsInv) || (rwInv > rsInv)
+        Log.d("ResultAnalyzer", "HandsAboveShoulder: left($lwInv>$lsInv) right($rwInv>$rsInv) -> $ok")
+        return ok
+    }
+
+    private fun l2Norm3(a: List<Double>, b: List<Double>): Double {
+        val dx = (a[0] - b[0])
+        val dy = (a[1] - b[1])
+        val dz = (a[2] - b[2])
+        return sqrt(dx.pow(2) + dy.pow(2) + dz.pow(2))
     }
 }
