@@ -45,29 +45,41 @@ class _UserDetailState extends State<UserDetailLhc> {
 
   Future<void> _loadUserData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // 輔助函式：不管原本存什麼型態，都安全地轉成 String，並去掉 .0
+    String getValue(String key) {
+      Object? value = prefs.get(key); // 使用通用 get
+      if (value == null) return '0';
+
+      String strValue = value.toString();
+      // 如果是 15.0 這種格式，去掉 .0 變成 15
+      if (strValue.endsWith('.0')) {
+        return strValue.replaceAll('.0', '');
+      }
+      return strValue;
+    }
+
     setState(() {
       _videoPath = prefs.getString('${currentUser}_LHC_VideoPath') ?? '';
+
+      // 使用新的通用讀取方式，解決型態錯誤導致顯示 0 的問題
       _weightRatingPointsController.text =
-          prefs.getInt('${currentUser}_LHC_WeightRatingPoints')?.toString() ?? '0';
+          getValue('${currentUser}_LHC_WeightRatingPoints');
+
       _totalBodyPosturePointsController.text =
-          prefs
-              .getDouble('${currentUser}_LHC_TotalBodyPosturePoints')
-              ?.toString()
-              .replaceAll(".0", "") ??
-              '0';
+          getValue('${currentUser}_LHC_TotalBodyPosturePoints');
+
       _timeRatingPointsController.text =
-          prefs
-              .getDouble('${currentUser}_LHC_TimeRatingPoints')
-              ?.toString()
-              .replaceAll(".0", "") ??
-              '0';
+          getValue('${currentUser}_LHC_TimeRatingPoints');
+
       _weightHandlingRatingPointsController.text =
-          prefs.getInt('${currentUser}_LHC_WeightHandlingRatingPoints')?.toString() ?? '0';
+          getValue('${currentUser}_LHC_WeightHandlingRatingPoints');
+
       _workConditionRatingPointsController.text =
-          prefs.getInt('${currentUser}_LHC_WorkConditionRatingPoints')?.toString() ?? '0';
+          getValue('${currentUser}_LHC_WorkConditionRatingPoints');
+
       _workOrganizationRatingPointsController.text =
-          prefs.getInt('${currentUser}_LHC_WorkOrganizationRatingPoints')?.toString() ??
-              '0';
+          getValue('${currentUser}_LHC_WorkOrganizationRatingPoints');
     });
   }
 

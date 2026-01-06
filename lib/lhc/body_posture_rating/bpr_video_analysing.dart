@@ -23,8 +23,9 @@ class BPRVideoAnalysing extends StatefulWidget {
 
 class _BPRVideoAnalysingState extends State<BPRVideoAnalysing> {
   static const platform = MethodChannel('video_processor');
-  late String _uploadURL;
+  // late String _uploadURL; // 沒用到可以註解掉
   late String currentUser;
+
   static const Map<String, String> poseImageMap = {
     '1': '1',
     '2': '2',
@@ -36,20 +37,23 @@ class _BPRVideoAnalysingState extends State<BPRVideoAnalysing> {
     '8': '5-2',
     '9': '5-3',
   };
+
   @override
   void initState() {
     super.initState();
     currentUser = widget.userName ?? "vJ#CA:F3zP)C]A=V";
   }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (mounted) {
-      _testPing();  // 加入 ping 測試
+      // _testPing(); // 測試完畢可註解掉保持乾淨
       _processVideo(MediaQuery.of(context).size.width, MediaQuery.of(context).size.height);
     }
   }
 
+  /*
   Future<void> _testPing() async {
     try {
       print("Flutter: 呼叫 ping 測試");
@@ -59,6 +63,7 @@ class _BPRVideoAnalysingState extends State<BPRVideoAnalysing> {
       print("Flutter: ping 測試失敗 ! $e");
     }
   }
+  */
 
   Future<void> _processVideo(double screenWidth, double screenHeight) async {
     try {
@@ -70,6 +75,11 @@ class _BPRVideoAnalysingState extends State<BPRVideoAnalysing> {
             context,
             MaterialPageRoute(
               builder: (context) => BPRResult(
+                // 🔥 修正重點：傳遞 userName 與 reRecord 給結果頁
+                userName: widget.userName,
+                reRecord: widget.reRecord,
+
+                // 以下保持原樣
                 twistOrLeanPoints: (result['twistAndLanternal'] ?? 0.0).toDouble(),
                 distanceOfBodyCenterPoints: (result['distance of body'] ?? 0.0).toDouble(),
                 armLiftPoints: (result['arm raise'] ?? 0.0).toDouble(),
@@ -89,6 +99,11 @@ class _BPRVideoAnalysingState extends State<BPRVideoAnalysing> {
         if (mounted) Navigator.pop(context);
       }
     } on PlatformException {
+      _showErrorToast(screenWidth);
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      // 增加一般的錯誤捕捉
+      debugPrint("處理影片發生未知錯誤: $e");
       _showErrorToast(screenWidth);
       if (mounted) Navigator.pop(context);
     }

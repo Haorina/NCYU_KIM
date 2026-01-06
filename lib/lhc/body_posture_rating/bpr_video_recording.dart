@@ -25,33 +25,11 @@ class LHCVideoRecording extends StatefulWidget {
   State<LHCVideoRecording> createState() => _LHCVideoRecordingState();
 }
 
-class VideoSelection {
-  Future<void> pickVideo(BuildContext context, String currentUser, {bool reRecord = false}) async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? video = await picker.pickVideo(source: ImageSource.gallery);
-
-    if (video != null && context.mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder:
-              (context) => BPRVideoAnalysing(
-            userName: currentUser,
-            videoPath: video.path,
-            reRecord: reRecord,
-          ),
-        ),
-      );
-    }
-  }
-}
-
 class _LHCVideoRecordingState extends State<LHCVideoRecording> {
   late CameraController _controller;
   late Future<void> _initializeControllerFuture;
   int selectedCameraIdx = 0;
   bool _isRecording = false;
-  final VideoSelection _videoSelector = VideoSelection();
   late String currentUser;
   late bool isGuest;
 
@@ -79,31 +57,52 @@ class _LHCVideoRecordingState extends State<LHCVideoRecording> {
     super.dispose();
   }
 
-  Future<void> toggleRecording(BuildContext context, {bool reRecord = false}) async {
+  Future<void> pickVideo() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? video = await picker.pickVideo(source: ImageSource.gallery);
+
+    if (video != null && mounted) {
+      _navigateToAnalysis(video.path);
+    }
+  }
+
+  // 🔥 修正重點在這裡 🔥
+  void _navigateToAnalysis(String videoPath) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BPRVideoAnalysing(
+          userName: currentUser,
+          videoPath: videoPath,
+          // ❌ 原本：reRecord: widget.reRecord ?? false (導致預設不存檔)
+          // ✅ 改為：reRecord: true (強制存檔)
+          reRecord: true,
+        ),
+      ),
+    );
+  }
+
+  Future<void> toggleRecording() async {
     if (_isRecording) {
       final file = await _controller.stopVideoRecording();
       final String directory = (await getApplicationDocumentsDirectory()).path;
       final String videoPath =
           '$directory/${DateTime.now().toIso8601String()}.mp4';
+
       await file.saveTo(videoPath);
-      await Gal.putVideo(videoPath, album: "KIM_VID");
+
+      try {
+        await Gal.putVideo(videoPath, album: "KIM_VID");
+      } catch (e) {
+        debugPrint("儲存相簿失敗 (模擬器可能不支援): $e");
+      }
 
       setState(() {
         _isRecording = false;
       });
 
-      if (context.mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder:
-                (context) => BPRVideoAnalysing(
-              userName: currentUser,
-              videoPath: videoPath,
-              reRecord: reRecord,
-            ),
-          ),
-        );
+      if (mounted) {
+        _navigateToAnalysis(videoPath);
       }
     } else {
       await _controller.startVideoRecording();
@@ -159,34 +158,17 @@ class _LHCVideoRecordingState extends State<LHCVideoRecording> {
                       icon: Image.asset("assets/images/help-circle.png"),
                       iconSize: screenWidth * 0.056,
                       onPressed: () {
+                        // ... Help Dialog 程式碼保持不變 ...
                         showGeneralDialog(
                           context: context,
                           barrierDismissible: true,
-                          barrierLabel:
-                          MaterialLocalizations.of(
-                            context,
-                          ).modalBarrierDismissLabel,
+                          barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
                           transitionDuration: const Duration(milliseconds: 300),
-                          pageBuilder:
-                              (context, animation, secondaryAnimation) =>
+                          pageBuilder: (context, animation, secondaryAnimation) =>
                               _buildHelpDialog(screenWidth, screenHeight),
-                          transitionBuilder: (
-                              context,
-                              animation,
-                              secondaryAnimation,
-                              child,
-                              ) {
-                            final curved = CurvedAnimation(
-                              parent: animation,
-                              curve: Curves.easeOutBack,
-                            );
-                            return FadeTransition(
-                              opacity: curved,
-                              child: ScaleTransition(
-                                scale: curved,
-                                child: child,
-                              ),
-                            );
+                          transitionBuilder: (context, animation, secondaryAnimation, child) {
+                            final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutBack);
+                            return FadeTransition(opacity: curved, child: ScaleTransition(scale: curved, child: child));
                           },
                         );
                       },
@@ -195,12 +177,11 @@ class _LHCVideoRecordingState extends State<LHCVideoRecording> {
                 ),
                 actions: [
                   IconButton(
-                    icon: Icon(Icons.home_outlined),
+                    icon: const Icon(Icons.home_outlined),
                     iconSize: screenWidth * 0.068,
                     color: Colors.black,
                     onPressed: () async {
                       await clearGuestKeysForLHC();
-
                       if (context.mounted) {
                         Navigator.pushAndRemoveUntil(
                           context,
@@ -212,8 +193,7 @@ class _LHCVideoRecordingState extends State<LHCVideoRecording> {
                   ),
                 ],
               ),
-              body:
-              snapshot.connectionState == ConnectionState.done &&
+              body: snapshot.connectionState == ConnectionState.done &&
                   _controller.value.isInitialized
                   ? _buildCameraView(
                 screenWidth,
@@ -229,23 +209,14 @@ class _LHCVideoRecordingState extends State<LHCVideoRecording> {
     );
   }
 
-  Widget _buildCameraView(
-      double screenWidth,
-      double screenHeight,
-      double bottomPadding,
-      BuildContext context,
-      ) {
+  // ... _buildCameraView, _buildLoading, _buildHelpDialog 保持不變 ...
+  Widget _buildCameraView(double screenWidth, double screenHeight, double bottomPadding, BuildContext context) {
     return Container(
       color: const Color(0xFFEFEFEF),
       child: Column(
         children: [
           isGuest
-              ? ProgressBar(
-            currentStep: 2,
-            totalStep: 7,
-            screenWidth: screenWidth,
-            screenHeight: screenHeight,
-          )
+              ? ProgressBar(currentStep: 2, totalStep: 7, screenWidth: screenWidth, screenHeight: screenHeight)
               : SizedBox(height: screenHeight * 0.01),
           SizedBox(height: screenHeight * 0.008),
           SizedBox(
@@ -258,17 +229,13 @@ class _LHCVideoRecordingState extends State<LHCVideoRecording> {
             children: [
               SizedBox(width: screenWidth * 0.058),
               IconButton(
-                icon: Icon(
-                  Icons.photo_library,
-                  size: screenWidth * 0.12,
-                  color: Colors.black,
-                ),
-                onPressed: () => _videoSelector.pickVideo(context, currentUser, reRecord: widget.reRecord ?? false),
+                icon: Icon(Icons.photo_library, size: screenWidth * 0.12, color: Colors.black),
+                onPressed: pickVideo,
               ),
               SizedBox(width: screenWidth * 0.19),
               Center(
                 child: GestureDetector(
-                  onTap: () => toggleRecording(context, reRecord: widget.reRecord ?? false,),
+                  onTap: toggleRecording,
                   child: Container(
                     width: screenWidth * 0.18,
                     height: screenHeight * 0.076,
@@ -276,21 +243,13 @@ class _LHCVideoRecordingState extends State<LHCVideoRecording> {
                       color: _isRecording ? Colors.red : Colors.black87,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      _isRecording ? Icons.stop : Icons.videocam,
-                      color: const Color(0xFFEFEFEF),
-                      size: screenWidth * 0.12,
-                    ),
+                    child: Icon(_isRecording ? Icons.stop : Icons.videocam, color: const Color(0xFFEFEFEF), size: screenWidth * 0.12),
                   ),
                 ),
               ),
               SizedBox(width: screenWidth * 0.19),
               IconButton(
-                icon: Icon(
-                  CupertinoIcons.arrow_2_circlepath,
-                  size: screenWidth * 0.12,
-                  color: Colors.black,
-                ),
+                icon: Icon(CupertinoIcons.arrow_2_circlepath, size: screenWidth * 0.12, color: Colors.black),
                 onPressed: () async {
                   await _controller.dispose();
                   onSwitchCamera();
@@ -308,18 +267,8 @@ class _LHCVideoRecordingState extends State<LHCVideoRecording> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            "鏡頭準備中...",
-            style: TextStyle(
-              fontSize: screenWidth * 0.066,
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          LoadingAnimationWidget.waveDots(
-            color: const Color(0xff808080),
-            size: screenWidth * 0.25,
-          ),
+          Text("鏡頭準備中...", style: TextStyle(fontSize: screenWidth * 0.066, fontWeight: FontWeight.w500), textAlign: TextAlign.center),
+          LoadingAnimationWidget.waveDots(color: const Color(0xff808080), size: screenWidth * 0.25),
         ],
       ),
     );
@@ -330,10 +279,7 @@ class _LHCVideoRecordingState extends State<LHCVideoRecording> {
       child: Container(
         width: screenWidth * 0.6,
         height: screenHeight * 0.15,
-        decoration: BoxDecoration(
-          color: const Color(0XCC101010),
-          borderRadius: BorderRadius.circular(10),
-        ),
+        decoration: BoxDecoration(color: const Color(0XCC101010), borderRadius: BorderRadius.circular(10)),
         child: Column(
           children: [
             SizedBox(
@@ -342,51 +288,15 @@ class _LHCVideoRecordingState extends State<LHCVideoRecording> {
                 children: [
                   Container(
                     width: screenWidth * 0.44,
-                    margin: EdgeInsets.only(
-                      top: screenHeight * 0.008,
-                      left: screenWidth * 0.03,
-                    ),
-                    child: Text(
-                      "拍攝建議",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: screenWidth * 0.045,
-                        fontWeight: FontWeight.bold,
-                        decoration: TextDecoration.none,
-                      ),
-                    ),
+                    margin: EdgeInsets.only(top: screenHeight * 0.008, left: screenWidth * 0.03),
+                    child: Text("拍攝建議", style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.045, fontWeight: FontWeight.bold, decoration: TextDecoration.none)),
                   ),
-                  IconButton(
-                    icon: Icon(
-                      Icons.clear,
-                      color: Colors.white,
-                      size: screenWidth * 0.06,
-                    ),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
+                  IconButton(icon: Icon(Icons.clear, color: Colors.white, size: screenWidth * 0.06), onPressed: () => Navigator.of(context).pop()),
                 ],
               ),
             ),
-            Container(
-              height: screenHeight * 0.001,
-              margin: EdgeInsets.only(
-                top: screenHeight * 0.01,
-                bottom: screenHeight * 0.02,
-              ),
-              color: const Color(0XCCFFFFFF),
-            ),
-            Center(
-              child: Text(
-                "拍攝角度建議為側面\n人體請全程入境",
-                style: TextStyle(
-                  fontSize: screenWidth * 0.04,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                  decoration: TextDecoration.none,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
+            Container(height: screenHeight * 0.001, margin: EdgeInsets.only(top: screenHeight * 0.01, bottom: screenHeight * 0.02), color: const Color(0XCCFFFFFF)),
+            Center(child: Text("拍攝角度建議為側面\n人體請全程入境", style: TextStyle(fontSize: screenWidth * 0.04, color: Colors.white, fontWeight: FontWeight.w500, decoration: TextDecoration.none), textAlign: TextAlign.center)),
           ],
         ),
       ),

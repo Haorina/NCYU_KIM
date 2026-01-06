@@ -23,7 +23,6 @@ class _TestRecordState extends State<TestRecord> {
     super.initState();
     _loadUsers();
   }
-
   //  載入所有使用者清單
   Future<void> _loadUsers() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -72,127 +71,119 @@ class _TestRecordState extends State<TestRecord> {
       double screenHeight,
       ) {
     TextEditingController controller = TextEditingController(text: oldUsername);
+    String? errorText; // 用來顯示錯誤訊息
 
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-        title: Text(
-          '修改使用者名稱',
-          style: TextStyle(fontSize: screenWidth * 0.056),
-        ),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(hintText: "輸入新名稱"),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              String newUsername = controller.text.trim();
-              if (newUsername.isEmpty || newUsername == oldUsername) {
-                Navigator.pop(context); // 名稱無效或未更改，關閉
-                return;
-              }
+      builder: (context) {
+        return StatefulBuilder( // 使用 StatefulBuilder 來局部更新錯誤訊息
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: Text(
+                '修改使用者名稱',
+                style: TextStyle(fontSize: screenWidth * 0.056),
+              ),
+              content: TextField(
+                controller: controller,
+                decoration: InputDecoration(
+                  hintText: "輸入新名稱",
+                  errorText: errorText, // 顯示錯誤訊息
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () async {
+                    String newUsername = controller.text.trim();
 
-              await _updateUsername(oldUsername, newUsername);
+                    // 1. 檢查是否沒變或為空
+                    if (newUsername.isEmpty || newUsername == oldUsername) {
+                      Navigator.pop(context);
+                      return;
+                    }
 
-              if (context.mounted) {
-                Navigator.pop(context); // 關閉對話框
-              }
-            },
-            child: Text('修改', style: TextStyle(color: Colors.blue)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('取消'),
-          ),
-        ],
-      ),
+                    // 2. 檢查新名稱是否已存在 (避免資料覆蓋)
+                    // 從目前的 users 列表檢查
+                    bool isExist = users.any((u) => u['username'] == newUsername);
+                    if (isExist) {
+                      setStateDialog(() {
+                        errorText = "此名稱已存在，請換一個";
+                      });
+                      return;
+                    }
+
+                    // 3. 執行更新
+                    // 顯示讀取圈圈或直接關閉
+                    Navigator.pop(context); // 先關閉對話框
+                    await _updateUsername(oldUsername, newUsername);
+
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('已將 $oldUsername 修改為 $newUsername')),
+                      );
+                    }
+                  },
+                  child: const Text('修改', style: TextStyle(color: Colors.blue)),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('取消'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
-
-  // 實際執行使用者名稱更新的邏輯
-  Future<void> _updateUsername(String oldUsername, String newUsername) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    // 這裡的邏輯會非常複雜，因為您必須複製所有舊的 SharedPreferences 鍵，並用新名字儲存，然後刪除舊鍵。
-
-    // 1. 取得所有舊鍵
-    final Set<String> keys = prefs.getKeys();
-    final List<String> userKeys =
-    keys.where((key) => key.startsWith(oldUsername)).toList();
-
-    // 2. 複製/重命名並儲存所有數據
-    for (String oldKey in userKeys) {
-      final value = prefs.get(oldKey); // 獲取值（通用方法）
-      final newKey = oldKey.replaceFirst(oldUsername, newUsername);
-
-      // 由於 prefs.get() 返回 dynamic，我們需要判斷類型並用對應的 set 方法儲存
-      if (value is String) {
-        await prefs.setString(newKey, value);
-      } else if (value is List<String>) {
-        await prefs.setStringList(newKey, value);
-      } else if (value is int) {
-        await prefs.setInt(newKey, value);
-      } else if (value is double) {
-        await prefs.setDouble(newKey, value);
-      } else if (value is bool) {
-        await prefs.setBool(newKey, value);
-      }
-    }
-
-    // 3. 更新模組使用者列表 (LHC_Users, ABP_Users, BM_Users)
-    final List<String> updateLists = ['LHC_Users', 'ABP_Users', 'BM_Users'];
-    for (String listKey in updateLists) {
-      List<String> userList = prefs.getStringList(listKey) ?? [];
-      if (userList.contains(oldUsername)) {
-        userList.remove(oldUsername);
-        userList.add(newUsername);
-        await prefs.setStringList(listKey, userList);
-      }
-    }
-
-    // 4. 刪除所有舊鍵
-    for (String oldKey in userKeys) {
-      await prefs.remove(oldKey);
-    }
-
-    // 5. 重新載入顯示列表
-    await _loadUsers();
-  }
-
   // 刪除使用者紀錄（含各模組分數）
   Future<void> _deleteUser(int index) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // 注意：這裡要從 filteredUsers 拿名字，因為使用者可能正在搜尋狀態下操作
     String username = filteredUsers[index]["username"]!;
 
-    // 1️⃣ 刪除該使用者所有 key
-    for (String key in prefs.getKeys()) {
-      if (key.startsWith('${username}_')) {
+    // 1️⃣ 刪除該使用者所有相關的 key (以 "username_" 開頭的)
+    final Set<String> keys = prefs.getKeys();
+    String prefix = "${username}_";
+
+    for (String key in keys) {
+      if (key.startsWith(prefix)) {
         await prefs.remove(key);
       }
     }
 
-    // 2️⃣ 更新 users 清單（目前頁面顯示）
-    users.removeWhere((u) => u["username"] == username);
-    filteredUsers.removeAt(index);
+    // 2️⃣ 分模組更新對應的使用者清單 (移除名字)
+    final List<String> listKeys = ['LHC_Users', 'ABP_Users', 'BM_Users'];
+    for (String listKey in listKeys) {
+      List<String> userList = prefs.getStringList(listKey) ?? [];
+      if (userList.contains(username)) {
+        userList.remove(username);
+        await prefs.setStringList(listKey, userList);
+      }
+    }
 
-    // 3️⃣ 分模組更新對應的使用者清單
-    final List<String> lhcUsers = prefs.getStringList('LHC_Users') ?? [];
-    final List<String> abpUsers = prefs.getStringList('ABP_Users') ?? [];
-    final List<String> bmUsers = prefs.getStringList('BM_Users') ?? [];
+    // 3️⃣ 更新 UI 狀態
+    setState(() {
+      // 從總表中移除
+      users.removeWhere((u) => u["username"] == username);
 
-    lhcUsers.remove(username);
-    abpUsers.remove(username);
-    bmUsers.remove(username);
+      // 從顯示列表中移除 (使用 removeAt 比較危險，因為搜尋後 index 會變)
+      // 建議直接用 username 比對移除
+      filteredUsers.removeWhere((u) => u["username"] == username);
 
-    await prefs.setStringList('LHC_Users', lhcUsers);
-    await prefs.setStringList('ABP_Users', abpUsers);
-    await prefs.setStringList('BM_Users', bmUsers);
+      // 如果搜尋框有字，可以考慮重新過濾一次，確保狀態正確
+      if (searchQuery.isNotEmpty) {
+        _filterUsers(searchQuery);
+      }
+    });
 
-    setState(() {});
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('已刪除 $username 的所有紀錄')),
+      );
+    }
   }
-
+  // 顯示刪除確認對話框
   void showDeleteDialog(
       BuildContext context,
       int index,
@@ -201,8 +192,7 @@ class _TestRecordState extends State<TestRecord> {
       ) {
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: Text(
           '刪除紀錄',
           style: TextStyle(fontSize: screenWidth * 0.056),
@@ -214,10 +204,14 @@ class _TestRecordState extends State<TestRecord> {
         actions: [
           TextButton(
             onPressed: () async {
+              // 呼叫實際的刪除邏輯
               await _deleteUser(index);
-              if (context.mounted) Navigator.pop(context);
+
+              if (context.mounted) {
+                Navigator.pop(context); // 關閉對話框
+              }
             },
-            child: Text('刪除', style: TextStyle(color: Colors.red)),
+            child: const Text('刪除', style: TextStyle(color: Colors.red)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -226,6 +220,72 @@ class _TestRecordState extends State<TestRecord> {
         ],
       ),
     );
+  }
+  // 實際執行使用者名稱更新的邏輯
+  Future<void> _updateUsername(String oldUsername, String newUsername) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // 1. 取得所有目前的 Key
+    final Set<String> allKeys = prefs.getKeys();
+
+    // 定義舊的前綴與新的前綴 (例如: "Alice_" -> "Bob_")
+    String oldPrefix = "${oldUsername}_";
+    String newPrefix = "${newUsername}_";
+
+    // 2. 遍歷所有 Key，找出屬於該使用者的資料進行搬移
+    for (String key in allKeys) {
+      // 判斷 Key 是否以 "舊名字_" 開頭
+      if (key.startsWith(oldPrefix)) {
+        // 取得舊值
+        Object? value = prefs.get(key);
+
+        // 產生新 Key (將舊前綴換成新前綴)
+        String newKey = key.replaceFirst(oldPrefix, newPrefix);
+
+        // 儲存到新 Key (需要判斷型態)
+        await _setValue(prefs, newKey, value);
+
+        // 刪除舊 Key
+        await prefs.remove(key);
+      }
+    }
+
+    // 3. 更新模組使用者清單 (LHC_Users, ABP_Users, BM_Users)
+    // 這些清單存的是 ["Alice", "Bob"]，我們需要把裡面的 "Alice" 改成 "Bob"
+    final List<String> listKeys = ['LHC_Users', 'ABP_Users', 'BM_Users'];
+
+    for (String listKey in listKeys) {
+      List<String> userList = prefs.getStringList(listKey) ?? [];
+
+      if (userList.contains(oldUsername)) {
+        int index = userList.indexOf(oldUsername);
+        userList[index] = newUsername; // 原地替換，保持順序
+        await prefs.setStringList(listKey, userList);
+      }
+    }
+
+    // 4. 重新載入顯示列表
+    await _loadUsers();
+  }
+
+  // 輔助函式：根據值的型態寫入 SharedPreferences
+  Future<void> _setValue(SharedPreferences prefs, String key, Object? value) async {
+    if (value is String) {
+      await prefs.setString(key, value);
+    } else if (value is int) {
+      await prefs.setInt(key, value);
+    } else if (value is double) {
+      await prefs.setDouble(key, value);
+    } else if (value is bool) {
+      await prefs.setBool(key, value);
+    } else if (value is List<Object?>) {
+      // SharedPreferences 讀出的 List 可能是 List<Object?>，需轉型為 List<String>
+      try {
+        await prefs.setStringList(key, (value as List).cast<String>());
+      } catch (e) {
+        debugPrint("Error casting list for key $key: $e");
+      }
+    }
   }
 
   // 打開指定使用者的模組紀錄

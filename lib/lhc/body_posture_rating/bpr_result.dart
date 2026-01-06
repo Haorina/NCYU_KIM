@@ -46,7 +46,9 @@ class BPRResult extends StatefulWidget {
   State<BPRResult> createState() => _BPRResultState();
 }
 
+// 存檔邏輯 (保持不變)
 Future<void> _saveBodyPosturePoints(
+    String? userName,
     String videoPath,
     double twistOrLeanPoints,
     double distanceOfBodyCenterPoints,
@@ -58,20 +60,19 @@ Future<void> _saveBodyPosturePoints(
     String startPosture,
     String endPosture,
     ) async {
+  if (userName == null || userName.isEmpty) return;
+
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  await prefs.setString("VideoPath", videoPath);
-  await prefs.setDouble("TwistOrLeanPoints", twistOrLeanPoints);
-  await prefs.setDouble(
-    "DistanceOfBodyCenterPoints",
-    distanceOfBodyCenterPoints,
-  );
-  await prefs.setDouble("ArmLiftPoints", armLiftPoints);
-  await prefs.setDouble("AboveShoulderPoints", aboveShoulderPoints);
-  await prefs.setDouble("BodyPosturePoints", bodyPosturePoints);
-  await prefs.setDouble("TotalAdditionalPoints", totalAdditionalPoints);
-  await prefs.setDouble("TotalBodyPosturePoints", totalBodyPosturePoints);
-  await prefs.setString("StartPosture", startPosture);
-  await prefs.setString("EndPosture", endPosture);
+  await prefs.setString("${userName}_LHC_VideoPath", videoPath);
+  await prefs.setDouble("${userName}_LHC_TwistOrLeanPoints", twistOrLeanPoints);
+  await prefs.setDouble("${userName}_LHC_DistanceOfBodyCenterPoints", distanceOfBodyCenterPoints);
+  await prefs.setDouble("${userName}_LHC_ArmLiftPoints", armLiftPoints);
+  await prefs.setDouble("${userName}_LHC_AboveShoulderPoints", aboveShoulderPoints);
+  await prefs.setDouble("${userName}_LHC_BodyPosturePoints", bodyPosturePoints);
+  await prefs.setDouble("${userName}_LHC_TotalAdditionalPoints", totalAdditionalPoints);
+  await prefs.setDouble("${userName}_LHC_TotalBodyPosturePoints", totalBodyPosturePoints);
+  await prefs.setString("${userName}_LHC_StartPosture", startPosture);
+  await prefs.setString("${userName}_LHC_EndPosture", endPosture);
 }
 
 Widget square(double width, double height) {
@@ -154,7 +155,6 @@ Widget additionalPointCard(
     VoidCallback addCounterCallback,
     ) {
   addCounterCallback();
-
   return Container(
     width: screenWidth * 0.77,
     height: screenHeight * 0.13,
@@ -162,12 +162,12 @@ Widget additionalPointCard(
       color: Colors.white,
       borderRadius: BorderRadius.circular(10),
       border: Border.all(width: 1, color: Colors.white),
-      boxShadow: [
+      boxShadow: const [
         BoxShadow(
           offset: Offset(0, 0),
           blurRadius: 1,
           spreadRadius: 1,
-          color: const Color(0x10000000),
+          color: Color(0x10000000),
         ),
       ],
     ),
@@ -226,18 +226,39 @@ class _BPRResultState extends State<BPRResult> {
   late List<CameraDescription> camera;
   bool isInitialized = false;
 
+  // 🔥 1. 新增變數：用來儲存顯示用的分數
+  late double _twistOrLeanPoints;
+  late double _distanceOfBodyCenterPoints;
+  late double _armLiftPoints;
+  late double _aboveShoulderPoints;
+  late double _bodyPosturePoints;
+  late double _totalBodyPosturePoints;
+  late double _totalAdditionalPoints;
+  late String _startPosture;
+  late String _endPosture;
+  late String _videoPath;
+
   Future<void> initCameras() async {
-    camera = await availableCameras();
-    setState(() {
-      isInitialized = true;
-    });
+    try {
+      camera = await availableCameras();
+      if (mounted) {
+        setState(() {
+          isInitialized = true;
+        });
+      }
+    } catch (e) {
+      debugPrint("相機初始化失敗: $e");
+    }
   }
 
-  void addCounter() {
-    //counter.value += 1;
-  }
+  void addCounter() {}
 
   void _initializeVideoPlayer(String filePath) {
+    if (filePath.isEmpty || !File(filePath).existsSync()) {
+      debugPrint("影片檔案不存在: $filePath");
+      return;
+    }
+
     _controller = VideoPlayerController.file(File(filePath))
       ..initialize().then((_) {
         if (mounted) {
@@ -250,37 +271,81 @@ class _BPRResultState extends State<BPRResult> {
         }
       }).catchError((error) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('影片初始化失敗: $error')),
-          );
+          debugPrint('影片初始化失敗: $error');
           setState(() => _isInitialized = false);
         }
       });
   }
 
+  // 🔥 2. 新增函式：從 SharedPreferences 載入舊資料
+  Future<void> _loadSavedData() async {
+    if (widget.userName == null) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final String prefix = "${widget.userName}_LHC_";
+
+    setState(() {
+      _twistOrLeanPoints = prefs.getDouble("${prefix}TwistOrLeanPoints") ?? 0.0;
+      _distanceOfBodyCenterPoints = prefs.getDouble("${prefix}DistanceOfBodyCenterPoints") ?? 0.0;
+      _armLiftPoints = prefs.getDouble("${prefix}ArmLiftPoints") ?? 0.0;
+      _aboveShoulderPoints = prefs.getDouble("${prefix}AboveShoulderPoints") ?? 0.0;
+      _bodyPosturePoints = prefs.getDouble("${prefix}BodyPosturePoints") ?? 0.0;
+      _totalBodyPosturePoints = prefs.getDouble("${prefix}TotalBodyPosturePoints") ?? 0.0;
+      _totalAdditionalPoints = prefs.getDouble("${prefix}TotalAdditionalPoints") ?? 0.0;
+      _startPosture = prefs.getString("${prefix}StartPosture") ?? "";
+      _endPosture = prefs.getString("${prefix}EndPosture") ?? "";
+      // 如果需要影片路徑也可以覆蓋，但通常從外部傳入的比較準
+      // _videoPath = prefs.getString("${prefix}VideoPath") ?? widget.videoPath;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
+
+    // 🔥 3. 初始化變數：預設使用傳入的參數
+    _twistOrLeanPoints = widget.twistOrLeanPoints;
+    _distanceOfBodyCenterPoints = widget.distanceOfBodyCenterPoints;
+    _armLiftPoints = widget.armLiftPoints;
+    _aboveShoulderPoints = widget.aboveShoulderPoints;
+    _bodyPosturePoints = widget.bodyPosturePoints;
+    _totalBodyPosturePoints = widget.totalBodyPosturePoints;
+    _totalAdditionalPoints = widget.totalAdditionalPoints;
+    _startPosture = widget.startPosture;
+    _endPosture = widget.endPosture;
+    _videoPath = widget.videoPath;
+
     initCameras();
-    _initializeVideoPlayer(widget.videoPath);
-    _saveBodyPosturePoints(
-      widget.videoPath,
-      widget.twistOrLeanPoints,
-      widget.distanceOfBodyCenterPoints,
-      widget.armLiftPoints,
-      widget.aboveShoulderPoints,
-      widget.bodyPosturePoints,
-      widget.totalAdditionalPoints,
-      widget.totalBodyPosturePoints,
-      widget.startPosture,
-      widget.endPosture,
-    );
+    _initializeVideoPlayer(_videoPath);
+
+    // 如果不是重新錄製 (也就是從選單點進來的 review 模式)，則載入舊資料
+    if (widget.reRecord == false) {
+      _loadSavedData();
+    } else {
+      // 只有在 reRecord 不是 false (即新錄製) 時才存檔
+      _saveBodyPosturePoints(
+        widget.userName,
+        widget.videoPath,
+        widget.twistOrLeanPoints,
+        widget.distanceOfBodyCenterPoints,
+        widget.armLiftPoints,
+        widget.aboveShoulderPoints,
+        widget.bodyPosturePoints,
+        widget.totalAdditionalPoints,
+        widget.totalBodyPosturePoints,
+        widget.startPosture,
+        widget.endPosture,
+      );
+    }
+
     counter.value = 0;
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    if (_isInitialized) {
+      _controller.dispose();
+    }
     super.dispose();
   }
 
@@ -296,19 +361,23 @@ class _BPRResultState extends State<BPRResult> {
           child: AspectRatio(
             aspectRatio: _controller.value.aspectRatio > 0
                 ? _controller.value.aspectRatio
-                : 1.0, // 預設長寬比為 1:1 避免異常
+                : 1.0,
             child: VideoPlayer(_controller),
           ),
         );
       } else {
-        return Text(
-          '正在準備中...',
-          style: TextStyle(
-            fontSize: screenWidth * 0.066,
-            fontWeight: FontWeight.w300,
-            color: Colors.black,
+        return Container(
+          height: 100,
+          alignment: Alignment.center,
+          child: Text(
+            '無法預覽影片\n(請確認檔案是否存在)',
+            style: TextStyle(
+              fontSize: screenWidth * 0.04,
+              fontWeight: FontWeight.w300,
+              color: Colors.grey,
+            ),
+            textAlign: TextAlign.center,
           ),
-          textAlign: TextAlign.center,
         );
       }
     }
@@ -359,9 +428,10 @@ class _BPRResultState extends State<BPRResult> {
                   screenHeight: screenHeight,
                 ),
                 ScoreBar(
+                  // 🔥 4. 修改 UI：使用 _totalBodyPosturePoints
                   labelText:
-                  "總分 : ${widget.totalBodyPosturePoints.toString().replaceAll(".0", "")} / 26 分",
-                  currentScore: widget.totalBodyPosturePoints,
+                  "總分 : ${_totalBodyPosturePoints.toString().replaceAll(".0", "")} / 26 分",
+                  currentScore: _totalBodyPosturePoints,
                   textSize: screenWidth * 0.038,
                   maxScore: 26,
                   barSize: screenWidth * 0.056,
@@ -377,16 +447,14 @@ class _BPRResultState extends State<BPRResult> {
                           margin: EdgeInsets.only(top: screenHeight * 0.01),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(
-                              screenWidth * 0.02,
-                            ),
+                            borderRadius: BorderRadius.circular(screenWidth * 0.02),
                             border: Border.all(width: 1, color: Colors.white),
-                            boxShadow: [
+                            boxShadow: const [
                               BoxShadow(
                                 offset: Offset(0, 0),
                                 blurRadius: 1.0,
                                 spreadRadius: 1,
-                                color: const Color(0x10000000),
+                                color: Color(0x10000000),
                               ),
                             ],
                           ),
@@ -410,11 +478,9 @@ class _BPRResultState extends State<BPRResult> {
                               ),
                               Container(
                                 height: screenHeight * 0.001,
-                                margin: EdgeInsets.only(
-                                  bottom: screenHeight * 0.014,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFC2C2C2),
+                                margin: EdgeInsets.only(bottom: screenHeight * 0.014),
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFC2C2C2),
                                 ),
                               ),
                               buildVideoPreview(),
@@ -423,6 +489,7 @@ class _BPRResultState extends State<BPRResult> {
                           ),
                         ),
                         SizedBox(height: screenHeight * 0.03),
+
                         Container(
                           width: screenWidth * 0.9,
                           height: screenHeight * 0.26,
@@ -430,12 +497,12 @@ class _BPRResultState extends State<BPRResult> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(width: 1, color: Colors.white),
-                            boxShadow: [
+                            boxShadow: const [
                               BoxShadow(
                                 offset: Offset(0, 0),
                                 blurRadius: 1,
                                 spreadRadius: 1,
-                                color: const Color(0x10000000),
+                                color: Color(0x10000000),
                               ),
                             ],
                           ),
@@ -459,25 +526,27 @@ class _BPRResultState extends State<BPRResult> {
                               ),
                               Container(
                                 height: screenHeight * 0.001,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFC2C2C2),
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFC2C2C2),
                                 ),
                               ),
                               Container(
-                                margin: EdgeInsets.only(
-                                  top: screenHeight * 0.026,
-                                ),
+                                margin: EdgeInsets.only(top: screenHeight * 0.026),
                                 child: SizedBox(
                                   height: screenHeight * 0.16,
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      SizedBox(
-                                        child: Image.asset(
-                                          "assets/images/A${widget.startPosture}.png",
-                                          fit: BoxFit.cover,
+                                      // 🔥 5. 修改 UI：使用 _startPosture
+                                      if (_startPosture.isNotEmpty)
+                                        SizedBox(
+                                          child: Image.asset(
+                                            "assets/images/A$_startPosture.png",
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, error, stackTrace) =>
+                                            const Icon(Icons.broken_image),
+                                          ),
                                         ),
-                                      ),
                                       SizedBox(width: screenWidth * 0.026),
                                       SizedBox(
                                         child: Icon(
@@ -487,12 +556,16 @@ class _BPRResultState extends State<BPRResult> {
                                         ),
                                       ),
                                       SizedBox(width: screenWidth * 0.026),
-                                      SizedBox(
-                                        child: Image.asset(
-                                          "assets/images/A${widget.endPosture}.png",
-                                          fit: BoxFit.cover,
+                                      // 🔥 6. 修改 UI：使用 _endPosture
+                                      if (_endPosture.isNotEmpty)
+                                        SizedBox(
+                                          child: Image.asset(
+                                            "assets/images/A$_endPosture.png",
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, error, stackTrace) =>
+                                            const Icon(Icons.broken_image),
+                                          ),
                                         ),
-                                      ),
                                     ],
                                   ),
                                 ),
@@ -501,10 +574,12 @@ class _BPRResultState extends State<BPRResult> {
                           ),
                         ),
                         SizedBox(height: screenHeight * 0.03),
-                        if (widget.twistOrLeanPoints != 0.0 ||
-                            widget.distanceOfBodyCenterPoints != 0.0 ||
-                            widget.armLiftPoints != 0.0 ||
-                            widget.aboveShoulderPoints != 0.0) ...[
+
+                        // 🔥 7. 修改判斷邏輯：使用 local variables
+                        if (_twistOrLeanPoints != 0.0 ||
+                            _distanceOfBodyCenterPoints != 0.0 ||
+                            _armLiftPoints != 0.0 ||
+                            _aboveShoulderPoints != 0.0) ...[
                           Container(
                             alignment: Alignment.centerLeft,
                             margin: EdgeInsets.only(
@@ -521,160 +596,94 @@ class _BPRResultState extends State<BPRResult> {
                             ),
                           ),
                         ],
-                        if (widget.twistOrLeanPoints != 0.0) ...[
+
+                        // 🔥 8. 下方的卡片全部換成 _twistOrLeanPoints 等變數
+                        if (_twistOrLeanPoints != 0.0) ...[
                           ValueListenableBuilder<int>(
                             valueListenable: counter,
-                            builder: (
-                                BuildContext context,
-                                int value,
-                                Widget? child,
-                                ) {
+                            builder: (BuildContext context, int value, Widget? child) {
                               return Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  additionalPointCardDecoration(
-                                    screenWidth,
-                                    screenHeight,
-                                    counter.value,
-                                  ),
+                                  additionalPointCardDecoration(screenWidth, screenHeight, 0),
                                   additionalPointCard(
-                                    screenWidth,
-                                    screenHeight,
-                                    widget.twistOrLeanPoints < 3
-                                        ? "軀幹偶爾扭轉、側傾"
-                                        : "軀幹經常扭轉、側傾",
-                                    widget.twistOrLeanPoints
-                                        .toString()
-                                        .replaceAll(".0", ""),
-                                    "3",
-                                    screenWidth * 0.34,
-                                    screenHeight * 0.34,
-                                    screenHeight * (-0.1),
-                                    screenHeight * 0.2,
-                                    "assets/images/leanAndTwist.png",
-                                    addCounter,
+                                    screenWidth, screenHeight,
+                                    _twistOrLeanPoints < 3 ? "軀幹偶爾扭轉、側傾" : "軀幹經常扭轉、側傾",
+                                    _twistOrLeanPoints.toString().replaceAll(".0", ""),
+                                    "3", screenWidth * 0.34, screenHeight * 0.34, screenHeight * (-0.1), screenHeight * 0.2,
+                                    "assets/images/leanAndTwist.png", addCounter,
                                   ),
                                 ],
                               );
                             },
                           ),
                         ],
-                        if (widget.distanceOfBodyCenterPoints != 0.0) ...[
+
+                        if (_distanceOfBodyCenterPoints != 0.0) ...[
                           ValueListenableBuilder<int>(
                             valueListenable: counter,
-                            builder: (
-                                BuildContext context,
-                                int value,
-                                Widget? child,
-                                ) {
+                            builder: (BuildContext context, int value, Widget? child) {
                               return Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  additionalPointCardDecoration(
-                                    screenWidth,
-                                    screenHeight,
-                                    counter.value,
-                                  ),
+                                  additionalPointCardDecoration(screenWidth, screenHeight, 1),
                                   additionalPointCard(
-                                    screenWidth,
-                                    screenHeight,
-                                    widget.distanceOfBodyCenterPoints < 3
-                                        ? "物體偶爾遠離身體"
-                                        : "物體經常遠離身體",
-                                    widget.distanceOfBodyCenterPoints
-                                        .toString()
-                                        .replaceAll(".0", ""),
-                                    "3",
-                                    screenWidth * 0.34,
-                                    screenHeight * 0.12,
-                                    screenHeight * 0.005,
-                                    screenHeight * 0.2,
-                                    "assets/images/distance_body_center.png",
-                                    addCounter,
+                                    screenWidth, screenHeight,
+                                    "手部遠離身體中心",
+                                    _distanceOfBodyCenterPoints.toString().replaceAll(".0", ""),
+                                    "2", screenWidth * 0.33, screenHeight * 0.33, screenHeight * (-0.085), screenHeight * 0.2,
+                                    "assets/images/distance_body_center.png", addCounter,
                                   ),
                                 ],
                               );
                             },
                           ),
                         ],
-                        if (widget.armLiftPoints != 0.0) ...[
+
+                        if (_armLiftPoints != 0.0) ...[
                           ValueListenableBuilder<int>(
                             valueListenable: counter,
-                            builder: (
-                                BuildContext context,
-                                int value,
-                                Widget? child,
-                                ) {
+                            builder: (BuildContext context, int value, Widget? child) {
                               return Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  additionalPointCardDecoration(
-                                    screenWidth,
-                                    screenHeight,
-                                    counter.value,
-                                  ),
+                                  additionalPointCardDecoration(screenWidth, screenHeight, 2),
                                   additionalPointCard(
-                                    screenWidth,
-                                    screenHeight,
-                                    widget.armLiftPoints < 1
-                                        ? "手臂偶爾抬舉"
-                                        : "手臂經常抬舉",
-                                    widget.armLiftPoints.toString().replaceAll(
-                                      ".0",
-                                      "",
-                                    ),
-                                    "1",
-                                    screenWidth * 0.34,
-                                    screenHeight * 0.12,
-                                    screenHeight * 0.005,
-                                    screenHeight * 0.2,
-                                    "assets/images/arm_lift.png",
-                                    addCounter,
+                                    screenWidth, screenHeight,
+                                    "手臂抬舉",
+                                    _armLiftPoints.toString().replaceAll(".0", ""),
+                                    "3", screenWidth * 0.3, screenHeight * 0.3, screenHeight * (-0.06), screenHeight * 0.22,
+                                    "assets/images/arm_lift.png", addCounter,
                                   ),
                                 ],
                               );
                             },
                           ),
                         ],
-                        if (widget.aboveShoulderPoints != 0.0) ...[
+
+                        if (_aboveShoulderPoints != 0.0) ...[
                           ValueListenableBuilder<int>(
                             valueListenable: counter,
-                            builder: (
-                                BuildContext context,
-                                int value,
-                                Widget? child,
-                                ) {
+                            builder: (BuildContext context, int value, Widget? child) {
                               return Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  additionalPointCardDecoration(
-                                    screenWidth,
-                                    screenHeight,
-                                    counter.value,
-                                  ),
+                                  additionalPointCardDecoration(screenWidth, screenHeight, 3),
                                   additionalPointCard(
-                                    screenWidth,
-                                    screenHeight,
-                                    widget.aboveShoulderPoints < 2
-                                        ? "手偶爾高過肩膀"
-                                        : "手經常高過肩膀",
-                                    widget.aboveShoulderPoints
-                                        .toString()
-                                        .replaceAll(".0", ""),
-                                    "2",
-                                    screenWidth * 0.34,
-                                    screenHeight * 0.12,
-                                    screenHeight * 0.005,
-                                    screenHeight * 0.2,
-                                    "assets/images/above_shoulder.png",
-                                    addCounter,
+                                    screenWidth, screenHeight,
+                                    "雙手高舉過肩",
+                                    _aboveShoulderPoints.toString().replaceAll(".0", ""),
+                                    "3", screenWidth * 0.34, screenHeight * 0.34, screenHeight * (-0.09), screenHeight * 0.17,
+                                    "assets/images/above_shoulder.png", addCounter,
                                   ),
                                 ],
                               );
                             },
                           ),
                         ],
+
                         SizedBox(height: screenHeight * 0.02),
+
                         if (isInitialized) ...[
                           PONButton(
                             screenWidth: screenWidth,
@@ -684,7 +693,7 @@ class _BPRResultState extends State<BPRResult> {
                             previousText: "再錄製一次",
                             nextText: "下一步",
                             previousPage: LHCVideoRecording(camera: camera),
-                            nextPage: TimeRating(),
+                            nextPage: TimeRating(userName: widget.userName),
                           ),
                         ],
                         SizedBox(height: screenHeight * 0.02),
