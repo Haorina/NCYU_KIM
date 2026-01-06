@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -10,20 +9,19 @@ class About extends StatefulWidget {
   State<About> createState() => _AboutState();
 }
 
-Widget expansionTileWidget(String titleText /*String text*/) {
+Widget expansionTileWidget(String titleText, double screenWidth, double screenHeight) {
   return Theme(
     data: ThemeData().copyWith(dividerColor: Colors.transparent),
     child: ExpansionTile(
       title: Text(
         titleText,
-        style: TextStyle(fontWeight: FontWeight.w200, fontSize: 20.sp),
+        style: TextStyle(fontWeight: FontWeight.w200, fontSize: screenWidth * 0.053),
       ),
       children: <Widget>[
         ListTile(
           title: Text(
             "Some text",
-            // text
-            style: TextStyle(fontSize: 16.sp),
+            style: TextStyle(fontSize: screenWidth * 0.052),
           ),
         ),
       ],
@@ -42,9 +40,18 @@ class _AboutState extends State<About> {
 
   Future<void> _saveServerIP(String serverIP, double screenWidth) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    if (!serverIP.startsWith("http")) {
+      serverIP = "http://$serverIP";
+    }
+    if (!serverIP.contains(":")) {
+      serverIP = "$serverIP:8080";
+    }
+
     await prefs.setString("ServerIP", serverIP);
+
     Fluttertoast.showToast(
-      msg: '已儲存 Server IP',
+      msg: '已儲存 Server IP: $serverIP',
       toastLength: Toast.LENGTH_SHORT,
       gravity: ToastGravity.BOTTOM,
       backgroundColor: Colors.white,
@@ -62,7 +69,7 @@ class _AboutState extends State<About> {
       appBar: AppBar(
         title: Text(
           "關於",
-          style: TextStyle(fontWeight: FontWeight.w400, fontSize: 20.sp),
+          style: TextStyle(fontWeight: FontWeight.w400, fontSize: screenWidth * 0.056),
         ),
         backgroundColor: const Color(0xFFD9D9D9),
       ),
@@ -73,19 +80,19 @@ class _AboutState extends State<About> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              SizedBox(height: 50.h),
+              SizedBox(height: screenHeight * 0.01),
               Container(
                 alignment: Alignment.centerLeft,
-                margin: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
+                margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.04, vertical: screenHeight * 0.01),
                 child: Text(
                   "關於作者",
                   style: TextStyle(
-                    fontSize: 15.sp,
+                    fontSize: screenWidth * 0.054,
                     color: const Color(0xFF999999),
                     shadows: [
                       Shadow(
-                        offset: Offset(1.h, 3.w),
-                        blurRadius: 14.0.r,
+                        offset: Offset(1, 3),
+                        blurRadius: 20,
                         color: const Color(0xFF999999),
                       ),
                     ],
@@ -93,20 +100,20 @@ class _AboutState extends State<About> {
                   textAlign: TextAlign.left,
                 ),
               ),
-              expansionTileWidget("作者資訊" /*""*/),
-              SizedBox(height: 50.h),
+              expansionTileWidget("作者資訊" /*""*/, screenWidth, screenHeight),
+              SizedBox(height: screenHeight * 0.05),
               Container(
                 alignment: Alignment.centerLeft,
-                margin: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
+                margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.04, vertical: screenHeight * 0.01),
                 child: Text(
                   "關於 KIM RISK ASSESSMENT APP",
                   style: TextStyle(
-                    fontSize: 15.sp,
+                    fontSize: screenWidth * 0.054,
                     color: const Color(0xFF999999),
                     shadows: [
                       Shadow(
-                        offset: Offset(1.h, 3.w),
-                        blurRadius: 14.0.r,
+                        offset: Offset(1, 3),
+                        blurRadius: 20,
                         color: const Color(0xFF999999),
                       ),
                     ],
@@ -114,24 +121,24 @@ class _AboutState extends State<About> {
                   textAlign: TextAlign.left,
                 ),
               ),
-              expansionTileWidget("資料來源" /*""*/),
-              SizedBox(height: 50.h),
-              expansionTileWidget("相關技術" /*""*/),
-              SizedBox(height: 50.h),
-              expansionTileWidget("問題回報" /*""*/),
-              SizedBox(height: 50.h),
+              expansionTileWidget("資料來源" /*""*/, screenWidth, screenHeight),
+              SizedBox(height: screenHeight * 0.05),
+              expansionTileWidget("相關技術" /*""*/, screenWidth, screenHeight),
+              SizedBox(height: screenHeight * 0.05),
+              expansionTileWidget("問題回報" /*""*/, screenWidth, screenHeight),
+              SizedBox(height: screenHeight * 0.05),
               Container(
                 alignment: Alignment.centerLeft,
-                margin: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
+                margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.04, vertical: screenHeight * 0.01),
                 child: Text(
                   "Server IP 設定",
                   style: TextStyle(
-                    fontSize: 15.sp,
+                    fontSize: screenWidth * 0.054,
                     color: const Color(0xFF999999),
                     shadows: [
                       Shadow(
-                        offset: Offset(1.h, 3.w),
-                        blurRadius: 14.0.r,
+                        offset: Offset(1, 3),
+                        blurRadius: 20,
                         color: const Color(0xFF999999),
                       ),
                     ],

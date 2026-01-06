@@ -35,7 +35,7 @@ class PONButton extends StatelessWidget {
               width: screenWidth * 0.36,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.push(
+                  Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (context) => previousPage!),
                   );
@@ -77,16 +77,10 @@ class PONButton extends StatelessWidget {
               width: havePrevious ? screenWidth * 0.3 : screenWidth * 0.36,
               child: ElevatedButton(
                 onPressed: () async {
-                  if(onTap != null) {
-                    await onTap!();
-                  }
-
-                  if(context.mounted) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => nextPage!),
-                    );
-                  }
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => nextPage!),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
@@ -95,13 +89,13 @@ class PONButton extends StatelessWidget {
                     borderRadius: BorderRadius.circular(30),
                   ),
                   padding: EdgeInsets.symmetric(
-                    horizontal: screenWidth * 0.036,
+                    horizontal: screenWidth * 0.01,
                     vertical: screenHeight * 0.01,
-                  ), // 內邊距
+                  ),
                 ),
                 child: Row(
                   children: [
-                    SizedBox(width: havePrevious ? screenWidth * 0.026 : screenWidth * 0.036),
+                    SizedBox(width: havePrevious ? screenWidth * 0.055 : screenWidth * 0.06),
                     Text(
                       nextText,
                       style: TextStyle(

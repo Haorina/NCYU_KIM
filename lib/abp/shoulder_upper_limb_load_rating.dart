@@ -3,13 +3,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
 import '../../user_define_widget/progress_bar.dart';
 import '../../user_define_widget/score_bar.dart';
-import '../user_define_widget/previous_or_next_button.dart';
 import '../user_define_widget/abp_select_item.dart';
 import 'lower_limb_load_rating.dart';
 import 'work_condition_rating.dart';
 
 class ShoulderUpperLimbLoadRating extends StatefulWidget {
-  const ShoulderUpperLimbLoadRating({super.key});
+  final String? userName;
+  const ShoulderUpperLimbLoadRating({super.key, this.userName});
 
   @override
   State<ShoulderUpperLimbLoadRating> createState() =>
@@ -27,33 +27,121 @@ class _ShoulderUpperLimbLoadRatingState
   String selectedTimeRatio1 = "<25";
   String selectedTimeRatio2 = "<25";
   String selectedTimeRatio3 = "<25";
+  late String currentUser;
+  late bool isGuest;
 
-  Future<void> _loadTotalSteps() async {
+  @override
+  void initState() {
+    super.initState();
+    currentUser = widget.userName ?? "vJ#CA:F3zP)C]A=V";
+
+    if (widget.userName != null && widget.userName != "vJ#CA:F3zP)C]A=V") {
+      isGuest = false;
+    } else {
+      isGuest = true;
+    }
+
+    _loadShoulderUpperLimbLoadRatingPoints();
+  }
+
+  Future<void> _loadShoulderUpperLimbLoadRatingPoints() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    setState(() {
-      totalSteps = prefs.getInt("TotalSteps") ?? 0;
-      partC = prefs.getBool("SquatOrKneel") ?? false;
-    });
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      isSelected1 = prefs.getBool('ShoulderUpperLimbLoadSelect1') ?? false;
+      isSelected2 = prefs.getBool('ShoulderUpperLimbLoadSelect2') ?? false;
+      isSelected3 = prefs.getBool('ShoulderUpperLimbLoadSelect3') ?? false;
+      selectedTimeRatio1 =
+          prefs.getString('ShoulderUpperLimbLoadLabel1') ?? "<25";
+      selectedTimeRatio2 =
+          prefs.getString('ShoulderUpperLimbLoadLabel2') ?? "<25";
+      selectedTimeRatio3 =
+          prefs.getString('ShoulderUpperLimbLoadLabel3') ?? "<25";
+      partC = prefs.getBool('PartC') ?? false;
+      totalSteps = prefs.getInt('TotalStep') ?? 4;
+    } else {
+      isSelected1 =
+          prefs.getBool(
+            '${widget.userName}_ABP_ShoulderUpperLimbLoadSelect1',
+          ) ??
+              false;
+      isSelected2 =
+          prefs.getBool(
+            '${widget.userName}_ABP_ShoulderUpperLimbLoadSelect2',
+          ) ??
+              false;
+      isSelected3 =
+          prefs.getBool(
+            '${widget.userName}_ABP_ShoulderUpperLimbLoadSelect3',
+          ) ??
+              false;
+      selectedTimeRatio1 =
+          prefs.getString(
+            '${widget.userName}_ABP_ShoulderUpperLimbLoadLabel1',
+          ) ??
+              "";
+      selectedTimeRatio2 =
+          prefs.getString(
+            '${widget.userName}_ABP_ShoulderUpperLimbLoadLabel2',
+          ) ??
+              "";
+      selectedTimeRatio3 =
+          prefs.getString(
+            '${widget.userName}_ABP_ShoulderUpperLimbLoadLabel3',
+          ) ??
+              "";
+      partC = prefs.getBool('${widget.userName}_ABP_PartC') ?? false;
+      totalSteps = prefs.getInt('${widget.userName}_ABP_TotalStep') ?? 0;
+    }
+
+    update();
   }
 
   Future<void> _saveShoulderUpperLimbLoadRatingPoints() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    await prefs.setInt("ShoulderUpperLimbLoadRatingPoints", score);
-    await prefs.setBool("HandAboveShoulder", isSelected1);
-    await prefs.setString("HandAboveShoulder_Frequency", selectedTimeRatio1);
-    await prefs.setBool("UpperFromBodyWithoutSupport", isSelected2);
-    await prefs.setString("UpperFromBodyWithoutSupport_Frequency", selectedTimeRatio2);
-    await prefs.setBool("LieDownOrLieProne", isSelected3);
-    await prefs.setString("LieDownOrLieProne_Frequency", selectedTimeRatio3);
-  }
-
-  @override
-  void initState() {
-    _loadTotalSteps();
-    _saveShoulderUpperLimbLoadRatingPoints();
-    super.initState();
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      await prefs.setBool('ShoulderUpperLimbLoadSelect1', isSelected1);
+      await prefs.setBool('ShoulderUpperLimbLoadSelect2', isSelected2);
+      await prefs.setBool('ShoulderUpperLimbLoadSelect3', isSelected3);
+      await prefs.setString('ShoulderUpperLimbLoadLabel1', selectedTimeRatio1);
+      await prefs.setString('ShoulderUpperLimbLoadLabel2', selectedTimeRatio2);
+      await prefs.setString('ShoulderUpperLimbLoadLabel3', selectedTimeRatio3);
+      await prefs.setBool('PartC', partC);
+      await prefs.setInt('ShoulderUpperLimbLoadRatingPoints', score);
+      await prefs.setInt('TotalStep', totalSteps);
+    } else {
+      await prefs.setBool(
+        '${widget.userName}_ABP_ShoulderUpperLimbLoadSelect1',
+        isSelected1,
+      );
+      await prefs.setBool(
+        '${widget.userName}_ABP_ShoulderUpperLimbLoadSelect2',
+        isSelected2,
+      );
+      await prefs.setBool(
+        '${widget.userName}_ABP_ShoulderUpperLimbLoadSelect3',
+        isSelected3,
+      );
+      await prefs.setString(
+        '${widget.userName}_ABP_ShoulderUpperLimbLoadLabel1',
+        selectedTimeRatio1,
+      );
+      await prefs.setString(
+        '${widget.userName}_ABP_ShoulderUpperLimbLoadLabel2',
+        selectedTimeRatio2,
+      );
+      await prefs.setString(
+        '${widget.userName}_ABP_ShoulderUpperLimbLoadLabel3',
+        selectedTimeRatio3,
+      );
+      await prefs.setBool('${widget.userName}_ABP_PartC', partC);
+      await prefs.setInt(
+        '${widget.userName}_ABP_ShoulderUpperLimbLoadRatingPoints',
+        score,
+      );
+      await prefs.setInt('${widget.userName}_ABP_TotalStep', totalSteps);
+    }
   }
 
   void update() {
@@ -88,7 +176,11 @@ class _ShoulderUpperLimbLoadRatingState
       score += selectedTimeRatio3Map[selectedTimeRatio3]!;
     }
 
-    _saveShoulderUpperLimbLoadRatingPoints();
+    setState(() {});
+
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      _saveShoulderUpperLimbLoadRatingPoints();
+    }
   }
 
   void updateTimeRatio1(String value, bool isSelected) {
@@ -115,7 +207,14 @@ class _ShoulderUpperLimbLoadRatingState
     });
   }
 
-  IconButton help1(double screenWidth, double screenHeight) {
+  IconButton helpCustom(
+      double screenWidth,
+      double screenHeight,
+      double height,
+      String title,
+      String content,
+      String imagePath,
+      ) {
     return IconButton(
       icon: Image.asset("assets/images/help-circle.png"),
       iconSize: screenWidth * 0.056,
@@ -131,7 +230,7 @@ class _ShoulderUpperLimbLoadRatingState
               (context, animation, secondaryAnimation) => Center(
             child: Container(
               width: screenWidth * 0.85,
-              height: screenHeight * 0.36,
+              height: height,
               decoration: BoxDecoration(
                 color: const Color(0XCC101010),
                 borderRadius: BorderRadius.circular(10),
@@ -139,47 +238,31 @@ class _ShoulderUpperLimbLoadRatingState
               child: Column(
                 children: [
                   SizedBox(
-                    height: screenHeight * 0.038,
+                    height: screenHeight * 0.05,
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        Container(
-                          width: screenWidth * 0.69,
-                          margin: EdgeInsets.only(
-                            top: screenHeight * 0.008,
-                            left: screenWidth * 0.03,
+                        IconButton(
+                          icon: Icon(
+                            Icons.clear,
+                            color: Colors.white,
+                            size: screenWidth * 0.06,
                           ),
-                        ),
-                        Container(
-                          margin: EdgeInsets.only(
-                            top: screenHeight * 0.004,
-                          ),
-                          child: IconButton(
-                            icon: Icon(
-                              Icons.clear,
-                              color: Colors.white,
-                              size: screenWidth * 0.06,
-                            ),
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                          ),
+                          onPressed: () => Navigator.of(context).pop(),
                         ),
                       ],
                     ),
                   ),
                   Container(
-                    height: screenHeight * 0.001,
-                    margin: EdgeInsets.only(
-                      top: screenHeight * 0.01,
-                      bottom: screenHeight * 0.01,
-                    ),
-                    color: const Color(0XCCEFEFEF),
+                    height: 1,
+                    color: const Color(0xFFEFEFEF),
+                    margin: EdgeInsets.only(bottom: screenHeight * 0.015),
                   ),
                   Center(
                     child: SizedBox(
                       width: screenWidth * 0.75,
                       child: Text(
-                        "手臂抬起高度未超過肩膀，但手部遠離身體且無其他支撐",
+                        title,
                         style: TextStyle(
                           fontSize: screenWidth * 0.042,
                           fontWeight: FontWeight.w500,
@@ -189,10 +272,11 @@ class _ShoulderUpperLimbLoadRatingState
                       ),
                     ),
                   ),
+                  SizedBox(height: screenHeight * 0.015),
                   SizedBox(
                     width: screenWidth * 0.75,
                     child: Text(
-                      "ex:\n•作業員在輸送帶旁整理物品，需要長時間伸\n 展手臂將物品從輸送帶上取下或放置到指定\n 位置，手臂沒有任何支撐\n•油漆工在粉刷牆面時，需要伸展手臂進行塗\n 刷，手臂需要持續用力，沒有支撐\n•組裝人員在工作檯上組裝零件，需要伸展手\n 臂操作工具或取放零件，手臂長時間處於懸\n 空狀態",
+                      content,
                       style: TextStyle(
                         fontSize: screenWidth * 0.038,
                         fontWeight: FontWeight.normal,
@@ -201,111 +285,12 @@ class _ShoulderUpperLimbLoadRatingState
                       ),
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
-          transitionBuilder: (context, animation, secondaryAnimation, child) {
-            final curved = CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOutBack,
-            );
-            return FadeTransition(
-              opacity: curved,
-              child: ScaleTransition(scale: curved, child: child),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  IconButton help2(double screenWidth, double screenHeight) {
-    return IconButton(
-      icon: Image.asset("assets/images/help-circle.png"),
-      iconSize: screenWidth * 0.056,
-      color: Colors.black,
-      onPressed: () {
-        showGeneralDialog(
-          context: context,
-          barrierDismissible: true,
-          barrierLabel:
-          MaterialLocalizations.of(context).modalBarrierDismissLabel,
-          transitionDuration: const Duration(milliseconds: 300),
-          pageBuilder:
-              (context, animation, secondaryAnimation) => Center(
-            child: Container(
-              width: screenWidth * 0.85,
-              height: screenHeight * 0.42,
-              decoration: BoxDecoration(
-                color: const Color(0XCC101010),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Column(
-                children: [
-                  SizedBox(
-                    height: screenHeight * 0.038,
-                    child: Row(
-                      children: [
-                        Container(
-                          width: screenWidth * 0.69,
-                          margin: EdgeInsets.only(
-                            top: screenHeight * 0.008,
-                            left: screenWidth * 0.03,
-                          ),
-                        ),
-                        Container(
-                          margin: EdgeInsets.only(
-                            top: screenHeight * 0.004,
-                          ),
-                          child: IconButton(
-                            icon: Icon(
-                              Icons.clear,
-                              color: Colors.white,
-                              size: screenWidth * 0.06,
-                            ),
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                          ),
-                        ),
-                      ],
+                  if (imagePath.trim().isNotEmpty)
+                    Image.asset(
+                      imagePath,
+                      width: screenWidth * 0.6,
+                      fit: BoxFit.fitWidth,
                     ),
-                  ),
-                  Container(
-                    height: screenHeight * 0.001,
-                    margin: EdgeInsets.only(
-                      top: screenHeight * 0.01,
-                      bottom: screenHeight * 0.01,
-                    ),
-                    color: const Color(0XCCEFEFEF),
-                  ),
-                  Center(
-                    child: SizedBox(
-                      width: screenWidth * 0.75,
-                      child: Text(
-                        "工作時身體趴伏於地面或作業平面，並且需要使用手臂進行操作，手臂的位置在身體下方或前方;或躺下，抬舉手臂進行操作",
-                        style: TextStyle(
-                          fontSize: screenWidth * 0.042,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
-                          decoration: TextDecoration.none,
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: screenWidth * 0.75,
-                    child: Text(
-                      "ex:\n•汽車維修人員需要趴在地上，將手臂伸到車\n 底進行零件拆裝，手臂需要用力操作工具，\n 並長時間維持這種姿勢\n•地板鋪設人員需要趴在地上，將手臂伸到身\n 體前方進行地板拼接，手臂需要頻繁移動和\n 施力\n•管線工人在地面下方安裝或維修管線，需趴\n 伏並用手操作工具\n•天花板彩繪",
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.038,
-                        fontWeight: FontWeight.normal,
-                        color: Colors.white,
-                        decoration: TextDecoration.none,
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -354,12 +339,16 @@ class _ShoulderUpperLimbLoadRatingState
                 icon: Icon(Icons.home_outlined),
                 iconSize: screenWidth * 0.068,
                 color: Colors.black,
-                onPressed: () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => HomePage()),
-                    (Route<dynamic> route) => false,
-                  );
+                onPressed: () async {
+                  await clearGuestKeysForABP();
+
+                  if (context.mounted) {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => HomePage()),
+                          (Route<dynamic> route) => false,
+                    );
+                  }
                 },
               ),
             ],
@@ -369,15 +358,17 @@ class _ShoulderUpperLimbLoadRatingState
             child: Column(
               children: [
                 SizedBox(height: screenHeight * 0.006),
-                ProgressBar(
+                isGuest
+                    ? ProgressBar(
                   currentStep: 3,
                   totalStep: totalSteps,
                   screenWidth: screenWidth,
                   screenHeight: screenHeight,
-                ),
+                )
+                    : SizedBox(height: screenHeight * 0.01),
                 ScoreBar(
                   labelText:
-                      "總分 : ${score.toString().replaceAll(".0", "")} / 92 分",
+                  "總分 : ${score.toString().replaceAll(".0", "")} / 92 分",
                   currentScore: score,
                   textSize: screenWidth * 0.038,
                   maxScore: 92,
@@ -392,45 +383,131 @@ class _ShoulderUpperLimbLoadRatingState
                     AbpSelectItem(
                       screenWidth: screenWidth,
                       screenHeight: screenHeight,
+                      isSelected: isSelected1,
+                      selectedTimeRatio: selectedTimeRatio1,
                       contentText: "手高舉過肩\n(站、蹲、跪姿)",
-                      exampleText: "e.g. 工地、室內裝修 、\n       電路通風系統安裝",
-                      image: "assets/images/distance_body_center.png",
-                      help: false,
+                      exampleText: "",
+                      image: "assets/images/shoulderB1s.png",
+                      help: true,
+                      icon: helpCustom(
+                        screenWidth,
+                        screenHeight,
+                        screenHeight * 0.35,
+                        "手高舉過肩\n(站、蹲、跪姿)",
+                        "",
+                        "assets/images/shoulderB1.png",
+                      ),
                       onTimeRatioChanged: updateTimeRatio1,
                     ),
                     SizedBox(height: screenHeight * 0.035),
                     AbpSelectItem(
                       screenWidth: screenWidth,
                       screenHeight: screenHeight,
+                      isSelected: isSelected2,
+                      selectedTimeRatio: selectedTimeRatio2,
                       contentText: "舉手但未過肩、\n遠離身體無支撐",
                       exampleText: "e.g. 整理輸送帶",
-                      image: "assets/images/distance_body_center.png",
+                      image: "assets/images/shoulderB2s.png",
                       help: true,
-                      icon: help1(screenWidth, screenHeight),
+                      icon: helpCustom(
+                        screenWidth,
+                        screenHeight,
+                        screenHeight * 0.44,
+                        "手臂抬起高度未超過肩膀，但手部遠離身體且無其他支撐",
+                        "ex:\n•作業員在輸送帶旁整理物品，需要長時間伸展手臂將物品從輸送帶上取下或放置到指定位置，手臂沒有任何支撐\n•油漆工在粉刷牆面時，需要伸展手臂進行塗刷，手臂需要持續用力，沒有支撐",
+                        "assets/images/shoulderB2.png",
+                      ),
                       onTimeRatioChanged: updateTimeRatio2,
                     ),
                     SizedBox(height: screenHeight * 0.035),
                     AbpSelectItem(
                       screenWidth: screenWidth,
                       screenHeight: screenHeight,
-                      contentText: "躺下，抬舉手臂\n趴下，手在身體下方/前方",
+                      isSelected: isSelected3,
+                      selectedTimeRatio: selectedTimeRatio3,
+                      contentText: "躺下，抬舉手臂\n趴下，手在身體下/前方",
                       exampleText: "e.g. 整理低處",
-                      image: "assets/images/distance_body_center.png",
+                      image: "assets/images/shoulderB3s.png",
                       help: true,
-                      icon: help2(screenWidth, screenHeight),
+                      icon: helpCustom(
+                        screenWidth,
+                        screenHeight,
+                        screenHeight * 0.48,
+                        "工作時身體趴伏於地面或作業平面，並且需要使用手臂進行操作，手臂的位置在身體下或前方;或躺下，抬舉手臂進行操作",
+                        "ex:\n•汽車維修人員需要趴在地上，將手臂伸到車底進行零件拆裝，手臂需要用力操作工具，並長時間維持這種姿勢\n•地板鋪設人員需要趴在地上，將手臂伸到身體前方進行地板拼接，手臂需要頻繁移動和施力\n•天花板彩繪",
+                        "assets/images/shoulderB3.png",
+                      ),
                       onTimeRatioChanged: updateTimeRatio3,
                     ),
                     SizedBox(height: screenHeight * 0.15),
-                    PONButton(
-                      screenWidth: screenWidth,
-                      screenHeight: screenHeight,
-                      havePrevious: false,
-                      haveNextPage: true,
-                      previousText: "",
-                      nextText: "下一步",
-                      nextPage:
-                          partC ? LowerLimbLoadRating() : WorkConditionRating(),
-                      onTap: () => _saveShoulderUpperLimbLoadRatingPoints(),
+                    SizedBox(
+                      width: screenWidth * 0.36,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          await _saveShoulderUpperLimbLoadRatingPoints();
+
+                          if (!isGuest && context.mounted) {
+                            Navigator.pop(context);
+                          } else {
+                            if (context.mounted) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) =>
+                                  partC
+                                      ? LowerLimbLoadRating(
+                                    userName: widget.userName,
+                                  )
+                                      : WorkConditionRating(
+                                    userName: widget.userName,
+                                  ),
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: screenWidth * 0.036,
+                            vertical: screenHeight * 0.01,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (isGuest) ...[
+                              SizedBox(width: screenWidth * 0.036),
+                              Text(
+                                "下一步",
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.049,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(width: screenWidth * 0.03),
+                              Icon(
+                                Icons.arrow_forward,
+                                color: Colors.white,
+                                size: screenWidth * 0.064,
+                              ),
+                            ] else ...[
+                              Text(
+                                "保存",
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.049,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),

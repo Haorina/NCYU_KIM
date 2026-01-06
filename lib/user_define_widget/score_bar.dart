@@ -40,9 +40,9 @@ class _ScoreBarState extends State<ScoreBar>
   void initState() {
     super.initState();
     _previousValue =
-        widget.maxScore != 0
-            ? (widget.currentScore / widget.maxScore).clamp(0.0, 1.0)
-            : 0.0;
+    widget.maxScore != 0
+        ? (widget.currentScore / widget.maxScore).clamp(0.0, 1.0)
+        : 0.0;
     _controller = AnimationController(
       duration: const Duration(milliseconds: 100),
       vsync: this,
@@ -50,9 +50,9 @@ class _ScoreBarState extends State<ScoreBar>
     _animation = Tween<double>(
       begin: _previousValue,
       end:
-          widget.maxScore != 0
-              ? (widget.currentScore / widget.maxScore).clamp(0.0, 1.0)
-              : 0.0,
+      widget.maxScore != 0
+          ? (widget.currentScore / widget.maxScore).clamp(0.0, 1.0)
+          : 0.0,
     ).animate(_controller)..addListener(() {
       setState(() {});
     });
@@ -67,9 +67,9 @@ class _ScoreBarState extends State<ScoreBar>
       _animation = Tween<double>(
         begin: _previousValue,
         end:
-            widget.maxScore != 0
-                ? (widget.currentScore / widget.maxScore).clamp(0.0, 1.0)
-                : 0.0,
+        widget.maxScore != 0
+            ? (widget.currentScore / widget.maxScore).clamp(0.0, 1.0)
+            : 0.0,
       ).animate(_controller)..addListener(() {
         setState(() {});
       });

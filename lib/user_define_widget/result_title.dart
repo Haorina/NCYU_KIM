@@ -64,13 +64,13 @@ class ResultTitle extends StatelessWidget {
             scoreBarWidth: 0.85,
             backgroundColor: const Color(0xFFD9D9D9),
             valueColor:
-                resultScore < 20
-                    ? const Color(0xFF38A63D)
-                    : resultScore < 50
-                    ? const Color(0xFFBFFF00)
-                    : resultScore < 100
-                    ? const Color(0xFFFF753E)
-                    : const Color(0xFFF10000),
+            resultScore < 20
+                ? const Color(0xFF38A63D)
+                : resultScore < 50
+                ? const Color(0xFFBFFF00)
+                : resultScore < 100
+                ? const Color(0xFFFF753E)
+                : const Color(0xFFF10000),
             screenWidth: screenWidth,
             screenHeight: screenHeight,
           ),

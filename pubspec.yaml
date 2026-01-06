@@ -31,6 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_screenutil:
+  flutter_slidable: ^3.0.0
   shared_preferences:
   camera:
   video_player:

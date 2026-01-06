@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../user_define_widget/progress_bar.dart';
 import '../user_define_widget/score_bar.dart';
-import '../user_define_widget/previous_or_next_button.dart';
 import '../../main.dart';
 import 'work_condition_rating.dart';
 
@@ -14,27 +13,21 @@ final Map<String, String> findLoadWeight = {
 };
 
 final Map<String, Map<String, int>> calculateScore = {
-  "pickOccasionally": {
-    "0~15": 2,
-    "16~30": 4,
-    "> 30": 6,
-  },
-  "pickOften": {
-    "0~15": 4,
-    "16~30": 6,
-    "> 30": 8,
-  },
+  "pickOccasionally": {"0~15": 2, "16~30": 4, "> 30": 6},
+  "pickOften": {"0~15": 4, "16~30": 6, "> 30": 8},
 };
 
 class BodyPostureRating extends StatefulWidget {
+  final bool haveTransportation;
+  final String loadWeightText;
+  final String? userName;
+
   const BodyPostureRating({
     super.key,
     required this.haveTransportation,
     required this.loadWeightText,
+    this.userName,
   });
-
-  final bool haveTransportation;
-  final String loadWeightText;
 
   @override
   State<BodyPostureRating> createState() => _BodyPostureRatingState();
@@ -42,31 +35,83 @@ class BodyPostureRating extends StatefulWidget {
 
 class _BodyPostureRatingState extends State<BodyPostureRating> {
   String _loadWeightText = "0~15";
-  int _score = 2;
   String pickText = "pickOccasionally";
   bool pickOccasionally = true;
   bool pickOften = false;
+  int _score = 2;
+  int totalStep = 7;
+  late String currentUser;
+  late bool isGuest;
 
   @override
   void initState() {
     super.initState();
+    currentUser = widget.userName ?? "vJ#CA:F3zP)C]A=V";
+
+    if (widget.userName != null && widget.userName != "vJ#CA:F3zP)C]A=V") {
+      isGuest = false;
+    } else {
+      isGuest = true;
+    }
+
+    _loadBodyPostureRatingPoints();
+  }
+
+  Future<void> _loadBodyPostureRatingPoints() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
     _loadWeightText = findLoadWeight[widget.loadWeightText]!;
-    _score = calculateScore[pickText]![_loadWeightText]!;
+
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      pickText = prefs.getString('PickText') ?? "pickOccasionally";
+      pickOccasionally = prefs.getBool('PickOccasionally') ?? true;
+      pickOften = prefs.getBool('PickOften') ?? false;
+      totalStep = prefs.getInt('TotalStep') ?? 7;
+    } else {
+      pickText =
+          prefs.getString('${widget.userName}_BM_PickText') ??
+              "pickOccasionally";
+      pickOccasionally =
+          prefs.getBool('${widget.userName}_BM_PickOccasionally') ?? true;
+      pickOften = prefs.getBool('${widget.userName}_BM_PickOften') ?? false;
+      totalStep = prefs.getInt('${widget.userName}_BM_TotalStep') ?? 7;
+    }
+
+    setState(() {});
+    update();
   }
 
   Future<void> _saveBodyPostureRatingPoints() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('BodyPostureRatingPoints', _score);
+
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      await prefs.setString('PickBodyPostureText', pickText);
+      await prefs.setBool('PickOccasionally', pickOccasionally);
+      await prefs.setBool('PickOften', pickOften);
+      await prefs.setInt('BodyPostureRatingPoints', _score);
+      await prefs.setInt('TotalStep', totalStep);
+    } else {
+      await prefs.setString('${currentUser}_BM_PickBodyPostureText', pickText);
+      await prefs.setBool(
+        '${currentUser}_BM_PickOccasionally',
+        pickOccasionally,
+      );
+      await prefs.setBool('${currentUser}_BM_PickOften', pickOften);
+      await prefs.setInt('${currentUser}_BM_BodyPostureRatingPoints', _score);
+      await prefs.setInt('${currentUser}_BM_TotalStep', totalStep);
+    }
   }
 
   void update() {
     setState(() {
       _score = calculateScore[pickText]![_loadWeightText]!;
-      _saveBodyPostureRatingPoints();
     });
+
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      _saveBodyPostureRatingPoints();
+    }
   }
 
-  Widget body(double screenWidth, double screenHeight, double bottomPadding) {
+  Widget body(double screenWidth, double screenHeight) {
     return Expanded(
       child: SingleChildScrollView(
         child: Column(
@@ -92,7 +137,9 @@ class _BodyPostureRatingState extends State<BodyPostureRating> {
                       context: context,
                       barrierDismissible: true,
                       barrierLabel:
-                      MaterialLocalizations.of(context).modalBarrierDismissLabel,
+                      MaterialLocalizations.of(
+                        context,
+                      ).modalBarrierDismissLabel,
                       transitionDuration: const Duration(milliseconds: 300),
                       pageBuilder:
                           (context, animation, secondaryAnimation) => Center(
@@ -172,7 +219,12 @@ class _BodyPostureRatingState extends State<BodyPostureRating> {
                           ),
                         ),
                       ),
-                      transitionBuilder: (context, animation, secondaryAnimation, child) {
+                      transitionBuilder: (
+                          context,
+                          animation,
+                          secondaryAnimation,
+                          child,
+                          ) {
                         final curved = CurvedAnimation(
                           parent: animation,
                           curve: Curves.easeOutBack,
@@ -207,7 +259,7 @@ class _BodyPostureRatingState extends State<BodyPostureRating> {
               child: Container(
                 margin: EdgeInsets.only(top: screenHeight * 0.01),
                 child: Image.asset(
-                  "assets/images/body_movement_type.png",
+                  "assets/images/BMc.png",
                   fit: BoxFit.contain,
                 ),
               ),
@@ -225,15 +277,12 @@ class _BodyPostureRatingState extends State<BodyPostureRating> {
                 pickOccasionally
                     ? const Color(0XFF6F8FA8)
                     : const Color(0xFFE9E9E9),
-                minimumSize: Size(
-                  screenWidth * 0.6,
-                  screenHeight * 0.056,
-                ),
+                minimumSize: Size(screenWidth * 0.6, screenHeight * 0.056),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                   side:
                   pickOccasionally
-                      ? BorderSide(color: Colors.black87, width: 1)
+                      ? const BorderSide(color: Colors.black87, width: 1)
                       : BorderSide.none,
                 ),
                 elevation: 5,
@@ -259,15 +308,12 @@ class _BodyPostureRatingState extends State<BodyPostureRating> {
                 pickOften
                     ? const Color(0XFF6F8FA8)
                     : const Color(0xFFE9E9E9),
-                minimumSize: Size(
-                  screenWidth * 0.6,
-                  screenHeight * 0.056,
-                ),
+                minimumSize: Size(screenWidth * 0.6, screenHeight * 0.056),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                   side:
                   pickOften
-                      ? BorderSide(color: Colors.black87, width: 1)
+                      ? const BorderSide(color: Colors.black87, width: 1)
                       : BorderSide.none,
                 ),
                 elevation: 5,
@@ -280,19 +326,73 @@ class _BodyPostureRatingState extends State<BodyPostureRating> {
                 ),
               ),
             ),
-            SizedBox(height: screenHeight * 0.22 - bottomPadding),
-            PONButton(
-              screenWidth: screenWidth,
-              screenHeight: screenHeight,
-              havePrevious: false,
-              haveNextPage: true,
-              previousText: "",
-              nextText: "下一步",
-              nextPage: WorkConditionRating(
-                haveTransportation: widget.haveTransportation,
+            SizedBox(height: screenHeight * 0.24),
+            SizedBox(
+              width: screenWidth * 0.36,
+              child: ElevatedButton(
+                onPressed: () async {
+                  await _saveBodyPostureRatingPoints();
+
+                  if (!isGuest && mounted) {
+                    Navigator.pop(context);
+                  } else {
+                    if (mounted) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => WorkConditionRating(
+                            haveTransportation: widget.haveTransportation,
+                            userName: currentUser,
+                          ),
+                        ),
+                      );
+                    }
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: screenWidth * 0.036,
+                    vertical: screenHeight * 0.01,
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (isGuest) ...[
+                      SizedBox(width: screenWidth * 0.036),
+                      Text(
+                        "下一步",
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.049,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(width: screenWidth * 0.03),
+                      Icon(
+                        Icons.arrow_forward,
+                        color: Colors.white,
+                        size: screenWidth * 0.064,
+                      ),
+                    ] else ...[
+                      Text(
+                        "保存",
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.049,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
-              onTap: () => _saveBodyPostureRatingPoints(),
             ),
+            SizedBox(height: screenHeight * 0.02),
           ],
         ),
       ),
@@ -303,7 +403,6 @@ class _BodyPostureRatingState extends State<BodyPostureRating> {
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.sizeOf(context).width;
     double screenHeight = MediaQuery.sizeOf(context).height;
-    double bottomPadding = MediaQuery.paddingOf(context).bottom;
 
     return Container(
       color: Colors.white,
@@ -326,15 +425,19 @@ class _BodyPostureRatingState extends State<BodyPostureRating> {
             backgroundColor: Colors.white,
             actions: [
               IconButton(
-                icon: Icon(Icons.home_outlined),
+                icon: const Icon(Icons.home_outlined),
                 iconSize: screenWidth * 0.068,
                 color: Colors.black,
-                onPressed: () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => HomePage()),
-                    (Route<dynamic> route) => false,
-                  );
+                onPressed: () async {
+                  await clearGuestKeysForBM();
+
+                  if (context.mounted) {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => HomePage()),
+                          (Route<dynamic> route) => false,
+                    );
+                  }
                 },
               ),
             ],
@@ -343,14 +446,17 @@ class _BodyPostureRatingState extends State<BodyPostureRating> {
             color: const Color(0xFFEFEFEF),
             child: Column(
               children: [
-                ProgressBar(
+                isGuest
+                    ? ProgressBar(
                   currentStep: 4,
-                  totalStep: widget.haveTransportation ? 9 : 7,
+                  totalStep: totalStep,
                   screenWidth: screenWidth,
                   screenHeight: screenHeight,
-                ),
+                )
+                    : SizedBox(height: screenHeight * 0.01),
                 ScoreBar(
-                  labelText: "總分 : ${_score.toString().replaceAll(".0", "")} / 8 分",
+                  labelText:
+                  "總分 : ${_score.toString().replaceAll(".0", "")} / 8 分",
                   currentScore: _score,
                   textSize: screenWidth * 0.038,
                   maxScore: 8,
@@ -359,7 +465,7 @@ class _BodyPostureRatingState extends State<BodyPostureRating> {
                   screenHeight: screenHeight,
                 ),
                 SizedBox(height: screenHeight * 0.02),
-                body(screenWidth, screenHeight, bottomPadding),
+                body(screenWidth, screenHeight),
               ],
             ),
           ),

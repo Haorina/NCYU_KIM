@@ -3,19 +3,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
 import '../../user_define_widget/progress_bar.dart';
 import '../../user_define_widget/score_bar.dart';
-import '../user_define_widget/previous_or_next_button.dart';
 import 'result.dart';
 
-List<String> weightOrganizationList1 = ["良好", "受限", "不良"];
-
-List<String> weightOrganizationList2 = ["0", "2", "4"];
+List<String> workOrganizationList1 = ["良好", "受限", "不良"];
+List<String> workOrganizationList2 = ["0", "2", "4"];
 
 Widget title(BuildContext context, double screenWidth, double screenHeight) {
   return Row(
     mainAxisAlignment: MainAxisAlignment.center,
     children: [
       Text(
-        "工作協調/時間分佈",
+        "工作協調 / 時間分佈",
         style: TextStyle(
           fontSize: screenWidth * 0.044,
           fontWeight: FontWeight.bold,
@@ -33,64 +31,113 @@ Widget body(double screenWidth, double screenHeight, String text) {
     decoration: BoxDecoration(
       color: const Color(0XFFEFEFEF),
       borderRadius: BorderRadius.circular(40),
-      boxShadow: [
+      boxShadow: const [
         BoxShadow(
           offset: Offset(0, 1),
           blurRadius: 1.0,
           spreadRadius: 1,
-          color: const Color(0x60000000),
+          color: Color(0x60000000),
         ),
       ],
     ),
     child: Container(
       decoration: BoxDecoration(
-        image:
-            weightOrganizationList1.indexOf(text) == 0
-                ? DecorationImage(
-                  image: AssetImage("assets/images/time_organ-good.png"),
-                  fit: BoxFit.fitHeight,
-                )
-                : weightOrganizationList1.indexOf(text) == 1
-                ? DecorationImage(
-                  image: AssetImage("assets/images/time_organ-restricted.png"),
-                  fit: BoxFit.fitHeight,
-                )
-                : DecorationImage(
-                  image: AssetImage("assets/images/time_organ-bad.png"),
-                  fit: BoxFit.fitHeight,
-                ),
+        image: DecorationImage(
+          image: AssetImage(
+            workOrganizationList1.indexOf(text) == 0
+                ? "assets/images/time_organ-good.png"
+                : workOrganizationList1.indexOf(text) == 1
+                ? "assets/images/time_organ-restricted.png"
+                : "assets/images/time_organ-bad.png",
+          ),
+          fit: BoxFit.fitHeight,
+        ),
       ),
     ),
   );
 }
 
 class WorkOrganizationRating extends StatefulWidget {
-  const WorkOrganizationRating({super.key});
+  final String? userName;
+  const WorkOrganizationRating({super.key, this.userName});
 
   @override
   State<WorkOrganizationRating> createState() => _WorkOrganizationRatingState();
 }
 
 class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
-  String _text = weightOrganizationList1[0];
-  int _score = int.parse(weightOrganizationList2[0]);
+  String _text = workOrganizationList1[0];
+  int _score = int.parse(workOrganizationList2[0]);
+  late String currentUser;
+  late bool isGuest;
 
-  Future<void> _saveWorkOrganizationRatingPoints(int score) async {
+  @override
+  void initState() {
+    super.initState();
+    currentUser = widget.userName ?? "vJ#CA:F3zP)C]A=V";
+
+    if (widget.userName != null && widget.userName != "vJ#CA:F3zP)C]A=V") {
+      isGuest = false;
+    } else {
+      isGuest = true;
+    }
+
+    _loadWorkOrganizationRatingPoints();
+  }
+
+  Future<void> _loadWorkOrganizationRatingPoints() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setInt("WorkOrganizationPoints", _score);
+
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      _text =
+          prefs.getString('WorkOrganizationLabel') ?? workOrganizationList1[0];
+      _score =
+          prefs.getInt('WorkOrganizationRatingPoints') ??
+              int.parse(workOrganizationList2[0]);
+    } else {
+      _text =
+          prefs.getString('${widget.userName}_LHC_WorkOrganizationLabel') ?? "";
+      _score =
+          prefs.getInt('${widget.userName}_LHC_WorkOrganizationRatingPoints') ??
+              0;
+    }
+
+    update(_text);
+  }
+
+  Future<void> _saveWorkOrganizationRatingPoints() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      await prefs.setString('WorkOrganizationLabel', _text);
+      await prefs.setInt('WorkOrganizationRatingPoints', _score);
+    } else {
+      await prefs.setString(
+        '${widget.userName}_LHC_WorkOrganizationLabel',
+        _text,
+      );
+      await prefs.setInt(
+        '${widget.userName}_LHC_WorkOrganizationRatingPoints',
+        _score,
+      );
+    }
   }
 
   void update(String value) {
+    int score = int.parse(
+      workOrganizationList2[workOrganizationList1.indexOf(value)],
+    );
     setState(() {
-      int score = int.parse(
-        weightOrganizationList2[weightOrganizationList1.indexOf(value)],
-      );
       _text = value;
       _score = score;
-      _saveWorkOrganizationRatingPoints(score);
     });
+
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      _saveWorkOrganizationRatingPoints();
+    }
   }
 
+  //選項按鈕
   Widget select(double screenWidth, double screenHeight) {
     return SizedBox(
       child: Row(
@@ -104,11 +151,11 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                 Center(
                   child: ElevatedButton(
                     onPressed: () {
-                      update(weightOrganizationList1[0]);
+                      update(workOrganizationList1[0]);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
-                      weightOrganizationList1.indexOf(_text) == 0
+                      workOrganizationList1.indexOf(_text) == 0
                           ? const Color(0XFF6F8FA8)
                           : const Color(0xFFE9E9E9),
                       minimumSize: Size(
@@ -118,17 +165,14 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                         side:
-                        weightOrganizationList1.indexOf(_text) == 0
-                            ? BorderSide(
-                          color: Colors.black87,
-                          width: 1,
-                        )
+                        workOrganizationList1.indexOf(_text) == 0
+                            ? BorderSide(color: Colors.black87, width: 1)
                             : BorderSide.none,
                       ),
                       elevation: 5,
                     ),
                     child: Text(
-                      weightOrganizationList1[0],
+                      workOrganizationList1[0],
                       style: TextStyle(
                         fontSize: screenWidth * 0.04,
                         color: Colors.black87,
@@ -151,15 +195,9 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                         MaterialLocalizations.of(
                           context,
                         ).modalBarrierDismissLabel,
-                        transitionDuration: const Duration(
-                          milliseconds: 300,
-                        ),
+                        transitionDuration: const Duration(milliseconds: 300),
                         pageBuilder:
-                            (
-                            context,
-                            animation,
-                            secondaryAnimation,
-                            ) => Center(
+                            (context, animation, secondaryAnimation) => Center(
                           child: Container(
                             width: screenWidth * 0.85,
                             height: screenHeight * 0.18,
@@ -211,7 +249,7 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                                     child: Text(
                                       "工作類型很多樣，不會一整天都做同一種很累的工作而一直同部位出力而受",
                                       style: TextStyle(
-                                        fontSize: screenWidth * 0.04,
+                                        fontSize: screenWidth * 0.042,
                                         fontWeight: FontWeight.w500,
                                         color: Colors.white,
                                         decoration: TextDecoration.none,
@@ -247,10 +285,7 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                           );
                           return FadeTransition(
                             opacity: curved,
-                            child: ScaleTransition(
-                              scale: curved,
-                              child: child,
-                            ),
+                            child: ScaleTransition(scale: curved, child: child),
                           );
                         },
                       );
@@ -269,11 +304,11 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                 Center(
                   child: ElevatedButton(
                     onPressed: () {
-                      update(weightOrganizationList1[1]);
+                      update(workOrganizationList1[1]);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
-                      weightOrganizationList1.indexOf(_text) == 1
+                      workOrganizationList1.indexOf(_text) == 1
                           ? const Color(0XFF6F8FA8)
                           : const Color(0xFFE9E9E9),
                       minimumSize: Size(
@@ -283,17 +318,14 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                         side:
-                        weightOrganizationList1.indexOf(_text) == 1
-                            ? BorderSide(
-                          color: Colors.black87,
-                          width: 1,
-                        )
+                        workOrganizationList1.indexOf(_text) == 1
+                            ? BorderSide(color: Colors.black87, width: 1)
                             : BorderSide.none,
                       ),
                       elevation: 5,
                     ),
                     child: Text(
-                      weightOrganizationList1[1],
+                      workOrganizationList1[1],
                       style: TextStyle(
                         fontSize: screenWidth * 0.04,
                         color: Colors.black87,
@@ -316,15 +348,9 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                         MaterialLocalizations.of(
                           context,
                         ).modalBarrierDismissLabel,
-                        transitionDuration: const Duration(
-                          milliseconds: 300,
-                        ),
+                        transitionDuration: const Duration(milliseconds: 300),
                         pageBuilder:
-                            (
-                            context,
-                            animation,
-                            secondaryAnimation,
-                            ) => Center(
+                            (context, animation, secondaryAnimation) => Center(
                           child: Container(
                             width: screenWidth * 0.85,
                             height: screenHeight * 0.23,
@@ -376,7 +402,7 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                                     child: Text(
                                       "工作內容變化不大，但偶爾會有一整天集中做一樣、高強度的工作",
                                       style: TextStyle(
-                                        fontSize: screenWidth * 0.04,
+                                        fontSize: screenWidth * 0.042,
                                         fontWeight: FontWeight.w500,
                                         color: Colors.white,
                                         decoration: TextDecoration.none,
@@ -387,7 +413,7 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                                 SizedBox(
                                   width: screenWidth * 0.7,
                                   child: Text(
-                                    "ex:\n•大多數時間都在搬較小的貨和點貨，但每禮拜固定一兩天一整天都在搬比較重的東西",
+                                    "ex:\n•大多數時間都在搬較小的貨和點貨，但每\n 禮拜固定一兩天一整天都在搬比較重的東\n 西",
                                     style: TextStyle(
                                       fontSize: screenWidth * 0.038,
                                       fontWeight: FontWeight.normal,
@@ -412,10 +438,7 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                           );
                           return FadeTransition(
                             opacity: curved,
-                            child: ScaleTransition(
-                              scale: curved,
-                              child: child,
-                            ),
+                            child: ScaleTransition(scale: curved, child: child),
                           );
                         },
                       );
@@ -434,11 +457,11 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                 Center(
                   child: ElevatedButton(
                     onPressed: () {
-                      update(weightOrganizationList1[2]);
+                      update(workOrganizationList1[2]);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
-                      weightOrganizationList1.indexOf(_text) == 2
+                      workOrganizationList1.indexOf(_text) == 2
                           ? const Color(0XFF6F8FA8)
                           : const Color(0xFFE9E9E9),
                       minimumSize: Size(
@@ -448,17 +471,14 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                         side:
-                        weightOrganizationList1.indexOf(_text) == 2
-                            ? BorderSide(
-                          color: Colors.black87,
-                          width: 1,
-                        )
+                        workOrganizationList1.indexOf(_text) == 2
+                            ? BorderSide(color: Colors.black87, width: 1)
                             : BorderSide.none,
                       ),
                       elevation: 5,
                     ),
                     child: Text(
-                      weightOrganizationList1[2],
+                      workOrganizationList1[2],
                       style: TextStyle(
                         fontSize: screenWidth * 0.04,
                         color: Colors.black87,
@@ -481,15 +501,9 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                         MaterialLocalizations.of(
                           context,
                         ).modalBarrierDismissLabel,
-                        transitionDuration: const Duration(
-                          milliseconds: 300,
-                        ),
+                        transitionDuration: const Duration(milliseconds: 300),
                         pageBuilder:
-                            (
-                            context,
-                            animation,
-                            secondaryAnimation,
-                            ) => Center(
+                            (context, animation, secondaryAnimation) => Center(
                           child: Container(
                             width: screenWidth * 0.85,
                             height: screenHeight * 0.24,
@@ -541,7 +555,7 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                                     child: Text(
                                       "幾乎整天都做同種又重又累的工作，身體沒有休息或變換的機會，造成身體某些部位過度疲勞或受傷",
                                       style: TextStyle(
-                                        fontSize: screenWidth * 0.04,
+                                        fontSize: screenWidth * 0.042,
                                         fontWeight: FontWeight.w500,
                                         color: Colors.white,
                                         decoration: TextDecoration.none,
@@ -552,7 +566,7 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                                 SizedBox(
                                   width: screenWidth * 0.7,
                                   child: Text(
-                                    "ex:\n•一整天都彎腰搬重物，沒有其他輕鬆的工作可以穿插",
+                                    "ex:\n•一整天都彎腰搬重物，沒有其他輕鬆的工\n 作可以穿插",
                                     style: TextStyle(
                                       fontSize: screenWidth * 0.038,
                                       fontWeight: FontWeight.normal,
@@ -577,10 +591,7 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                           );
                           return FadeTransition(
                             opacity: curved,
-                            child: ScaleTransition(
-                              scale: curved,
-                              child: child,
-                            ),
+                            child: ScaleTransition(scale: curved, child: child),
                           );
                         },
                       );
@@ -624,12 +635,16 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                 icon: Icon(Icons.home_outlined),
                 iconSize: screenWidth * 0.068,
                 color: Colors.black,
-                onPressed: () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => HomePage()),
-                    (Route<dynamic> route) => false,
-                  );
+                onPressed: () async {
+                  await clearGuestKeysForLHC();
+
+                  if (context.mounted) {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => HomePage()),
+                          (Route<dynamic> route) => false,
+                    );
+                  }
                 },
               ),
             ],
@@ -639,15 +654,17 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
             child: Column(
               children: [
                 SizedBox(height: screenHeight * 0.006),
-                ProgressBar(
+                isGuest
+                    ? ProgressBar(
                   currentStep: 6,
                   totalStep: 7,
                   screenWidth: screenWidth,
                   screenHeight: screenHeight,
-                ),
+                )
+                    : SizedBox(height: screenHeight * 0.01),
                 ScoreBar(
                   labelText:
-                      "總分 : ${_score.toString().replaceAll(".0", "")} / 4 分",
+                  "總分 : ${_score.toString().replaceAll(".0", "")} / 4 分",
                   currentScore: _score,
                   textSize: screenWidth * 0.038,
                   maxScore: 4,
@@ -664,15 +681,69 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                     body(screenWidth, screenHeight, _text),
                     SizedBox(height: screenHeight * 0.05),
                     select(screenWidth, screenHeight),
-                    SizedBox(height: screenHeight * 0.12),
-                    PONButton(
-                      screenWidth: screenWidth,
-                      screenHeight: screenHeight,
-                      havePrevious: false,
-                      haveNextPage: true,
-                      previousText: "",
-                      nextText: "下一步",
-                      nextPage: Result(),
+                    SizedBox(height: screenHeight * 0.2),
+                    SizedBox(
+                      width: screenWidth * 0.36,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          await _saveWorkOrganizationRatingPoints();
+
+                          if (!isGuest && context.mounted) {
+                            Navigator.pop(context);
+                          } else {
+                            if (context.mounted) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) =>
+                                      Result(userName: widget.userName),
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: screenWidth * 0.036,
+                            vertical: screenHeight * 0.01,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (isGuest) ...[
+                              SizedBox(width: screenWidth * 0.036),
+                              Text(
+                                "下一步",
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.049,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(width: screenWidth * 0.03),
+                              Icon(
+                                Icons.arrow_forward,
+                                color: Colors.white,
+                                size: screenWidth * 0.064,
+                              ),
+                            ] else ...[
+                              Text(
+                                "保存",
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.049,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),

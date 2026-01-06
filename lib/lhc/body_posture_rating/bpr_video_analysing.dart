@@ -7,8 +7,15 @@ import 'bpr_result.dart';
 
 class BPRVideoAnalysing extends StatefulWidget {
   final String videoPath;
+  final bool? reRecord;
+  final String? userName;
 
-  const BPRVideoAnalysing({super.key, required this.videoPath});
+  const BPRVideoAnalysing({
+    super.key,
+    this.userName,
+    required this.videoPath,
+    this.reRecord,
+  });
 
   @override
   State<BPRVideoAnalysing> createState() => _BPRVideoAnalysingState();
@@ -16,7 +23,8 @@ class BPRVideoAnalysing extends StatefulWidget {
 
 class _BPRVideoAnalysingState extends State<BPRVideoAnalysing> {
   static const platform = MethodChannel('video_processor');
-
+  late String _uploadURL;
+  late String currentUser;
   static const Map<String, String> poseImageMap = {
     '1': '1',
     '2': '2',
@@ -28,7 +36,11 @@ class _BPRVideoAnalysingState extends State<BPRVideoAnalysing> {
     '8': '5-2',
     '9': '5-3',
   };
-
+  @override
+  void initState() {
+    super.initState();
+    currentUser = widget.userName ?? "vJ#CA:F3zP)C]A=V";
+  }
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();

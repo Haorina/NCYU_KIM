@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../user_define_widget/progress_bar.dart';
 import '../user_define_widget/score_bar.dart';
-import '../user_define_widget/previous_or_next_button.dart';
 import '../../main.dart';
 import 'load_weight_position_rating.dart';
 
@@ -125,7 +124,6 @@ final Map<String, Map<String, Map<String, int>>> tableList1 = {
     },
   },
 };
-
 final Map<String, Map<String, int>> tableList2 = {
   "climbStair": {
     "無 / < 3": 24,
@@ -163,150 +161,22 @@ final Map<String, Map<String, int>> tableList2 = {
 };
 
 class BodyMovementA extends StatefulWidget {
-  const BodyMovementA({super.key, required this.haveTransportation});
-
+  final String? userName;
   final bool haveTransportation;
+
+  const BodyMovementA({
+    super.key,
+    required this.haveTransportation,
+    this.userName,
+  });
 
   @override
   State<BodyMovementA> createState() => _BodyMovementAState();
 }
 
-Widget title(BuildContext context, double screenWidth, double screenHeight) {
-  return Row(
-    mainAxisAlignment: MainAxisAlignment.start,
-    children: [
-      SizedBox(width: screenWidth * 0.41),
-      Text(
-        "實際負重",
-        style: TextStyle(
-          fontSize: screenWidth * 0.044,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      SizedBox(width: screenWidth * 0.2),
-      IconButton(
-        icon: Image.asset("assets/images/help-circle.png"),
-        iconSize: screenWidth * 0.056,
-        color: Colors.black,
-        onPressed: () {
-          showGeneralDialog(
-            context: context,
-            barrierDismissible: true,
-            barrierLabel:
-                MaterialLocalizations.of(context).modalBarrierDismissLabel,
-            transitionDuration: const Duration(milliseconds: 300),
-            pageBuilder:
-                (context, animation, secondaryAnimation) => Center(
-                  child: Container(
-                    width: screenWidth * 0.85,
-                    height: screenHeight * 0.36,
-                    decoration: BoxDecoration(
-                      color: const Color(0XCC101010),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          height: screenHeight * 0.038,
-                          child: Row(
-                            children: [
-                              Container(
-                                width: screenWidth * 0.69,
-                                margin: EdgeInsets.only(
-                                  top: screenHeight * 0.008,
-                                  left: screenWidth * 0.03,
-                                ),
-                              ),
-                              Container(
-                                margin: EdgeInsets.only(
-                                  top: screenHeight * 0.004,
-                                ),
-                                child: IconButton(
-                                  icon: Icon(
-                                    Icons.clear,
-                                    color: Colors.white,
-                                    size: screenWidth * 0.06,
-                                  ),
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          height: screenHeight * 0.001,
-                          margin: EdgeInsets.only(
-                            top: screenHeight * 0.01,
-                            bottom: screenHeight * 0.01,
-                          ),
-                          color: const Color(0XCCEFEFEF),
-                        ),
-                        Center(
-                          child: SizedBox(
-                            width: screenWidth * 0.75,
-                            child: Text(
-                              "檢測過程身體實際承擔的物品重量",
-                              style: TextStyle(
-                                fontSize: screenWidth * 0.042,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white,
-                                decoration: TextDecoration.none,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Center(
-                          child: SizedBox(
-                            width: screenWidth * 0.75,
-                            child: Text(
-                              "注意:\n1.以「實際承受的重量」計算，不是物品的標示重量\n2.若兩人一同搬運重物，每人約負荷60%重量(為了控制與協調，應假設超過50%)",
-                              style: TextStyle(
-                                fontSize: screenWidth * 0.042,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white,
-                                decoration: TextDecoration.none,
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          width: screenWidth * 0.75,
-                          child: Text(
-                            "ex:\n•推車載物總重50公斤，但只需推動力約10\n 公斤 → 實際負重10公斤兩人合力搬運\n 100公斤物品 → 每人實際負重約50公斤",
-                            style: TextStyle(
-                              fontSize: screenWidth * 0.038,
-                              fontWeight: FontWeight.normal,
-                              color: Colors.white,
-                              decoration: TextDecoration.none,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-            transitionBuilder: (context, animation, secondaryAnimation, child) {
-              final curved = CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeOutBack,
-              );
-              return FadeTransition(
-                opacity: curved,
-                child: ScaleTransition(scale: curved, child: child),
-              );
-            },
-          );
-        },
-      ),
-    ],
-  );
-}
-
 class _BodyMovementAState extends State<BodyMovementA> {
-  late int totalStep;
-  int bodyMovementARatingPoints = 4;
+  final ScrollController _controller = ScrollController();
+  String _weight = tableList[0];
   bool pickWalk = true;
   bool pickSlope = false;
   bool pickStair = false;
@@ -316,19 +186,204 @@ class _BodyMovementAState extends State<BodyMovementA> {
   bool pickClimbStair = false;
   bool pickClimbSteepStair = false;
   bool pickCrawl = false;
-  final ScrollController _controller = ScrollController();
-  String _weight = tableList[0];
-  int _score = 0;
+  int _score = 4;
+  int totalStep = 7;
+  late String currentUser;
+  late bool isGuest;
 
   @override
   void initState() {
     super.initState();
-    totalStep = widget.haveTransportation ? 8 : 6;
+    currentUser = widget.userName ?? "vJ#CA:F3zP)C]A=V";
+
+    if (widget.userName != null && widget.userName != "vJ#CA:F3zP)C]A=V") {
+      isGuest = false;
+    } else {
+      isGuest = true;
+    }
+
+    _loadBodyMovementARatingPoints();
+  }
+
+  Future<void> _loadBodyMovementARatingPoints() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      _weight = prefs.getString('WeightLabel') ?? tableList[0];
+      pickWalk = prefs.getBool('PickWalk') ?? true;
+      pickSlope = prefs.getBool('PickSlope') ?? false;
+      pickStair = prefs.getBool('PickStair') ?? false;
+      pickLow = prefs.getBool('PickLow') ?? true;
+      pickMedium = prefs.getBool('PickMedium') ?? false;
+      pickHigh = prefs.getBool('PickHigh') ?? false;
+      pickClimbStair = prefs.getBool('PickClimbStair') ?? false;
+      pickClimbSteepStair = prefs.getBool('PickClimbSteepStair') ?? false;
+      pickCrawl = prefs.getBool('PickCrawl') ?? false;
+      totalStep = prefs.getInt('TotalStep') ?? 7;
+    } else {
+      _weight =
+          prefs.getString('${widget.userName}_BM_WeightLabel') ?? tableList[0];
+      pickWalk = prefs.getBool('${widget.userName}_BM_PickWalk') ?? true;
+      pickSlope = prefs.getBool('${widget.userName}_BM_PickSlope') ?? false;
+      pickStair = prefs.getBool('${widget.userName}_BM_PickStair') ?? false;
+      pickLow = prefs.getBool('${widget.userName}_BM_PickLow') ?? true;
+      pickMedium = prefs.getBool('${widget.userName}_BM_PickMedium') ?? false;
+      pickHigh = prefs.getBool('${widget.userName}_BM_PickHigh') ?? false;
+      pickClimbStair =
+          prefs.getBool('${widget.userName}_BM_PickClimbStair') ?? false;
+      pickClimbSteepStair =
+          prefs.getBool('${widget.userName}_BM_PickClimbSteepStair') ?? false;
+      pickCrawl = prefs.getBool('${widget.userName}_BM_PickCrawl') ?? false;
+      totalStep = prefs.getInt('${widget.userName}_BM_TotalStep') ?? 7;
+    }
+
+    setState(() {});
+    update(_weight);
   }
 
   Future<void> _saveBodyMovementARatingPoints() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('BodyMovementARatingPoints', bodyMovementARatingPoints);
+
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      await prefs.setString('WeightLabel', _weight);
+      await prefs.setBool('PickWalk', pickWalk);
+      await prefs.setBool('PickSlope', pickSlope);
+      await prefs.setBool('PickStair', pickStair);
+      await prefs.setBool('PickLow', pickLow);
+      await prefs.setBool('PickMedium', pickMedium);
+      await prefs.setBool('PickHigh', pickHigh);
+      await prefs.setBool('PickClimbStair', pickClimbStair);
+      await prefs.setBool('PickClimbSteepStair', pickClimbSteepStair);
+      await prefs.setBool('PickCrawl', pickCrawl);
+      await prefs.setInt('BodyMovementARatingPoints', _score);
+      await prefs.setInt('TotalStep', totalStep);
+    } else {
+      await prefs.setString('${currentUser}_BM_WeightLabel', _weight);
+      await prefs.setBool('${currentUser}_BM_PickWalk', pickWalk);
+      await prefs.setBool('${currentUser}_BM_PickSlope', pickSlope);
+      await prefs.setBool('${currentUser}_BM_PickStair', pickStair);
+      await prefs.setBool('${currentUser}_BM_PickLow', pickLow);
+      await prefs.setBool('${currentUser}_BM_PickMedium', pickMedium);
+      await prefs.setBool('${currentUser}_BM_PickHigh', pickHigh);
+      await prefs.setBool('${currentUser}_BM_PickClimbStair', pickClimbStair);
+      await prefs.setBool(
+        '${currentUser}_BM_PickClimbSteepStair',
+        pickClimbSteepStair,
+      );
+      await prefs.setBool('${currentUser}_BM_PickCrawl', pickCrawl);
+      await prefs.setInt('${currentUser}_BM_BodyMovementARatingPoints', _score);
+      await prefs.setInt('${currentUser}_BM_TotalStep', totalStep);
+    }
+  }
+
+  Widget title(BuildContext context, double screenWidth, double screenHeight) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        SizedBox(width: screenWidth * 0.41),
+        Text(
+          "實際負重",
+          style: TextStyle(
+            fontSize: screenWidth * 0.044,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(width: screenWidth * 0.2),
+        IconButton(
+          icon: Image.asset("assets/images/help-circle.png"),
+          iconSize: screenWidth * 0.056,
+          color: Colors.black,
+          onPressed: () {
+            showGeneralDialog(
+              context: context,
+              barrierDismissible: true,
+              barrierLabel:
+              MaterialLocalizations.of(context).modalBarrierDismissLabel,
+              transitionDuration: const Duration(milliseconds: 300),
+              pageBuilder:
+                  (context, animation, secondaryAnimation) => Center(
+                child: Container(
+                  width: screenWidth * 0.85,
+                  height: screenHeight * 0.28,
+                  decoration: BoxDecoration(
+                    color: const Color(0XCC101010),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: screenHeight * 0.038,
+                        child: Row(
+                          children: [
+                            Container(
+                              width: screenWidth * 0.69,
+                              margin: EdgeInsets.only(
+                                top: screenHeight * 0.008,
+                                left: screenWidth * 0.03,
+                              ),
+                            ),
+                            Container(
+                              margin: EdgeInsets.only(
+                                top: screenHeight * 0.004,
+                              ),
+                              child: IconButton(
+                                icon: Icon(
+                                  Icons.clear,
+                                  color: Colors.white,
+                                  size: screenWidth * 0.06,
+                                ),
+                                onPressed:
+                                    () => Navigator.of(context).pop(),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        height: screenHeight * 0.001,
+                        margin: EdgeInsets.symmetric(
+                          vertical: screenHeight * 0.01,
+                        ),
+                        color: const Color(0XCCEFEFEF),
+                      ),
+                      Center(
+                        child: SizedBox(
+                          width: screenWidth * 0.75,
+                          child: Text(
+                            "檢測過程身體實際承擔的物品重量\n\n注意:\n1.以「實際承受的重量」計算，不是物品的標示重量\n2.若兩人一同搬運重物，每人約負荷60%重量(為了控制與協調，應假設超過50%)",
+                            style: TextStyle(
+                              fontSize: screenWidth * 0.042,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                              decoration: TextDecoration.none,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              transitionBuilder: (
+                  context,
+                  animation,
+                  secondaryAnimation,
+                  child,
+                  ) {
+                final curved = CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutBack,
+                );
+                return FadeTransition(
+                  opacity: curved,
+                  child: ScaleTransition(scale: curved, child: child),
+                );
+              },
+            );
+          },
+        ),
+      ],
+    );
   }
 
   int calculateScore(String weight) {
@@ -373,16 +428,17 @@ class _BodyMovementAState extends State<BodyMovementA> {
     setState(() {
       _weight = value;
       _score = calculateScore(value);
-      bodyMovementARatingPoints = _score;
-      _saveBodyMovementARatingPoints();
     });
+
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      _saveBodyMovementARatingPoints();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.sizeOf(context).width;
     double screenHeight = MediaQuery.sizeOf(context).height;
-    double bottomPadding = MediaQuery.paddingOf(context).bottom;
 
     Widget select(double screenWidth, double screenHeight) {
       return Container(
@@ -408,44 +464,44 @@ class _BodyMovementAState extends State<BodyMovementA> {
           underline: SizedBox(),
           borderRadius: BorderRadius.circular(10),
           items:
-              tableList.map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: StatefulBuilder(
-                    builder: (context, setState) {
-                      return Container(
-                        alignment: Alignment.center,
-                        margin: EdgeInsets.symmetric(
-                          horizontal: screenWidth * 0.02,
+          tableList.map<DropdownMenuItem<String>>((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: StatefulBuilder(
+                builder: (context, setState) {
+                  return Container(
+                    alignment: Alignment.center,
+                    margin: EdgeInsets.symmetric(
+                      horizontal: screenWidth * 0.02,
+                    ),
+                    decoration: BoxDecoration(
+                      color:
+                      _weight == value
+                          ? Colors.grey.shade300
+                          : Colors.transparent,
+                      border:
+                      value == "> 40"
+                          ? null
+                          : Border(
+                        bottom: BorderSide(
+                          color: Colors.black54,
+                          width: 1,
                         ),
-                        decoration: BoxDecoration(
-                          color:
-                              _weight == value
-                                  ? Colors.grey.shade300
-                                  : Colors.transparent,
-                          border:
-                              value == "> 40"
-                                  ? null
-                                  : Border(
-                                    bottom: BorderSide(
-                                      color: Colors.black54,
-                                      width: 1,
-                                    ),
-                                  ),
-                        ),
-                        child: Text(
-                          "$value 公斤",
-                          style: TextStyle(
-                            fontSize: screenWidth * 0.036,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              }).toList(),
+                      ),
+                    ),
+                    child: Text(
+                      "$value 公斤",
+                      style: TextStyle(
+                        fontSize: screenWidth * 0.036,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+          }).toList(),
           selectedItemBuilder: (BuildContext context) {
             return tableList.map((String value) {
               return Row(
@@ -553,7 +609,17 @@ class _BodyMovementAState extends State<BodyMovementA> {
                 child: Container(
                   margin: EdgeInsets.only(top: screenHeight * 0.01),
                   child: Image.asset(
-                    "assets/images/body_movement_type.png",
+                    pickWalk
+                        ? "assets/images/BMa1.png"
+                        : pickSlope
+                        ? "assets/images/BMa2.png"
+                        : pickStair
+                        ? "assets/images/BMa3.png"
+                        : pickClimbStair
+                        ? "assets/images/BMa4.png"
+                        : pickClimbSteepStair
+                        ? "assets/images/BMa5.png"
+                        : "assets/images/BMa6.png",
                     fit: BoxFit.contain,
                   ),
                 ),
@@ -583,9 +649,9 @@ class _BodyMovementAState extends State<BodyMovementA> {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
-                          pickWalk
-                              ? const Color(0XFF6F8FA8)
-                              : const Color(0xFFE9E9E9),
+                      pickWalk
+                          ? const Color(0XFF6F8FA8)
+                          : const Color(0xFFE9E9E9),
                       minimumSize: Size(
                         screenWidth * 0.3,
                         screenHeight * 0.056,
@@ -593,9 +659,9 @@ class _BodyMovementAState extends State<BodyMovementA> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                         side:
-                            pickWalk
-                                ? BorderSide(color: Colors.black87, width: 1)
-                                : BorderSide.none,
+                        pickWalk
+                            ? BorderSide(color: Colors.black87, width: 1)
+                            : BorderSide.none,
                       ),
                       elevation: 5,
                     ),
@@ -630,9 +696,9 @@ class _BodyMovementAState extends State<BodyMovementA> {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
-                          pickSlope
-                              ? const Color(0XFF6F8FA8)
-                              : const Color(0xFFE9E9E9),
+                      pickSlope
+                          ? const Color(0XFF6F8FA8)
+                          : const Color(0xFFE9E9E9),
                       minimumSize: Size(
                         screenWidth * 0.3,
                         screenHeight * 0.056,
@@ -640,9 +706,9 @@ class _BodyMovementAState extends State<BodyMovementA> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                         side:
-                            pickSlope
-                                ? BorderSide(color: Colors.black87, width: 1)
-                                : BorderSide.none,
+                        pickSlope
+                            ? BorderSide(color: Colors.black87, width: 1)
+                            : BorderSide.none,
                       ),
                       elevation: 5,
                     ),
@@ -677,9 +743,9 @@ class _BodyMovementAState extends State<BodyMovementA> {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
-                          pickStair
-                              ? const Color(0XFF6F8FA8)
-                              : const Color(0xFFE9E9E9),
+                      pickStair
+                          ? const Color(0XFF6F8FA8)
+                          : const Color(0xFFE9E9E9),
                       minimumSize: Size(
                         screenWidth * 0.3,
                         screenHeight * 0.056,
@@ -687,9 +753,9 @@ class _BodyMovementAState extends State<BodyMovementA> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                         side:
-                            pickStair
-                                ? BorderSide(color: Colors.black87, width: 1)
-                                : BorderSide.none,
+                        pickStair
+                            ? BorderSide(color: Colors.black87, width: 1)
+                            : BorderSide.none,
                       ),
                       elevation: 5,
                     ),
@@ -719,9 +785,9 @@ class _BodyMovementAState extends State<BodyMovementA> {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
-                          pickClimbStair
-                              ? const Color(0XFF6F8FA8)
-                              : const Color(0xFFE9E9E9),
+                      pickClimbStair
+                          ? const Color(0XFF6F8FA8)
+                          : const Color(0xFFE9E9E9),
                       minimumSize: Size(
                         screenWidth * 0.3,
                         screenHeight * 0.056,
@@ -729,9 +795,9 @@ class _BodyMovementAState extends State<BodyMovementA> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                         side:
-                            pickClimbStair
-                                ? BorderSide(color: Colors.black87, width: 1)
-                                : BorderSide.none,
+                        pickClimbStair
+                            ? BorderSide(color: Colors.black87, width: 1)
+                            : BorderSide.none,
                       ),
                       elevation: 5,
                     ),
@@ -756,9 +822,9 @@ class _BodyMovementAState extends State<BodyMovementA> {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
-                          pickClimbSteepStair
-                              ? const Color(0XFF6F8FA8)
-                              : const Color(0xFFE9E9E9),
+                      pickClimbSteepStair
+                          ? const Color(0XFF6F8FA8)
+                          : const Color(0xFFE9E9E9),
                       minimumSize: Size(
                         screenWidth * 0.3,
                         screenHeight * 0.056,
@@ -766,9 +832,9 @@ class _BodyMovementAState extends State<BodyMovementA> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                         side:
-                            pickClimbSteepStair
-                                ? BorderSide(color: Colors.black87, width: 1)
-                                : BorderSide.none,
+                        pickClimbSteepStair
+                            ? BorderSide(color: Colors.black87, width: 1)
+                            : BorderSide.none,
                       ),
                       elevation: 5,
                     ),
@@ -793,9 +859,9 @@ class _BodyMovementAState extends State<BodyMovementA> {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
-                          pickCrawl
-                              ? const Color(0XFF6F8FA8)
-                              : const Color(0xFFE9E9E9),
+                      pickCrawl
+                          ? const Color(0XFF6F8FA8)
+                          : const Color(0xFFE9E9E9),
                       minimumSize: Size(
                         screenWidth * 0.3,
                         screenHeight * 0.056,
@@ -803,9 +869,9 @@ class _BodyMovementAState extends State<BodyMovementA> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                         side:
-                            pickCrawl
-                                ? BorderSide(color: Colors.black87, width: 1)
-                                : BorderSide.none,
+                        pickCrawl
+                            ? BorderSide(color: Colors.black87, width: 1)
+                            : BorderSide.none,
                       ),
                       elevation: 5,
                     ),
@@ -840,9 +906,9 @@ class _BodyMovementAState extends State<BodyMovementA> {
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
-                                    pickLow
-                                        ? const Color(0XFF8F4B4B)
-                                        : const Color(0xFFE9E9E9),
+                                pickLow
+                                    ? const Color(0XFF8F4B4B)
+                                    : const Color(0xFFE9E9E9),
                                 minimumSize: Size(
                                   screenWidth * 0.22,
                                   screenHeight * 0.046,
@@ -850,12 +916,12 @@ class _BodyMovementAState extends State<BodyMovementA> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                   side:
-                                      pickLow
-                                          ? BorderSide(
-                                            color: Colors.black87,
-                                            width: 1,
-                                          )
-                                          : BorderSide.none,
+                                  pickLow
+                                      ? BorderSide(
+                                    color: Colors.black87,
+                                    width: 1,
+                                  )
+                                      : BorderSide.none,
                                 ),
                                 elevation: 5,
                               ),
@@ -883,100 +949,105 @@ class _BodyMovementAState extends State<BodyMovementA> {
                                   context: context,
                                   barrierDismissible: true,
                                   barrierLabel:
-                                      MaterialLocalizations.of(
-                                        context,
-                                      ).modalBarrierDismissLabel,
+                                  MaterialLocalizations.of(
+                                    context,
+                                  ).modalBarrierDismissLabel,
                                   transitionDuration: const Duration(
                                     milliseconds: 300,
                                   ),
                                   pageBuilder:
                                       (
-                                        context,
-                                        animation,
-                                        secondaryAnimation,
+                                      context,
+                                      animation,
+                                      secondaryAnimation,
                                       ) => Center(
-                                        child: Container(
-                                          width: screenWidth * 0.6,
-                                          height: screenHeight * 0.1,
-                                          decoration: BoxDecoration(
-                                            color: const Color(0XCC101010),
-                                            borderRadius: BorderRadius.circular(
-                                              10,
-                                            ),
-                                          ),
-                                          child: Column(
-                                            children: [
-                                              SizedBox(
-                                                height: screenHeight * 0.038,
-                                                child: Row(
-                                                  children: [
-                                                    Container(
-                                                      width: screenWidth * 0.445,
-                                                      margin: EdgeInsets.only(
-                                                        left:
-                                                            screenWidth * 0.03,
-                                                      ),
-                                                    ),
-                                                    Container(
-                                                      margin: EdgeInsets.only(
-                                                        top:
-                                                            screenHeight *
-                                                            0.004,
-                                                      ),
-                                                      child: IconButton(
-                                                        icon: Icon(
-                                                          Icons.clear,
-                                                          color: Colors.white,
-                                                          size:
-                                                              screenWidth *
-                                                              0.06,
-                                                        ),
-                                                        onPressed: () {
-                                                          Navigator.of(
-                                                            context,
-                                                          ).pop();
-                                                        },
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              Container(
-                                                height: screenHeight * 0.001,
-                                                margin: EdgeInsets.only(
-                                                  top: screenHeight * 0.01,
-                                                  bottom: screenHeight * 0.01,
-                                                ),
-                                                color: const Color(0XCCEFEFEF),
-                                              ),
-                                              Center(
-                                                child: SizedBox(
-                                                  width: screenWidth * 0.5,
-                                                  child: Text(
-                                                    pickWalk ? "走路速度 < 3 公里/小時" : pickSlope ? "傾斜角度 < 5°" : "普通樓梯",
-                                                    style: TextStyle(
-                                                      fontSize:
-                                                          screenWidth * 0.042,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      color: Colors.white,
-                                                      decoration:
-                                                          TextDecoration.none,
-                                                    ),
-                                                    textAlign: TextAlign.center,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                                    child: Container(
+                                      width: screenWidth * 0.6,
+                                      height: screenHeight * 0.1,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0XCC101010),
+                                        borderRadius: BorderRadius.circular(
+                                          10,
                                         ),
                                       ),
+                                      child: Column(
+                                        children: [
+                                          SizedBox(
+                                            height: screenHeight * 0.038,
+                                            child: Row(
+                                              children: [
+                                                Container(
+                                                  width:
+                                                  screenWidth * 0.445,
+                                                  margin: EdgeInsets.only(
+                                                    left:
+                                                    screenWidth * 0.03,
+                                                  ),
+                                                ),
+                                                Container(
+                                                  margin: EdgeInsets.only(
+                                                    top:
+                                                    screenHeight *
+                                                        0.004,
+                                                  ),
+                                                  child: IconButton(
+                                                    icon: Icon(
+                                                      Icons.clear,
+                                                      color: Colors.white,
+                                                      size:
+                                                      screenWidth *
+                                                          0.06,
+                                                    ),
+                                                    onPressed: () {
+                                                      Navigator.of(
+                                                        context,
+                                                      ).pop();
+                                                    },
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Container(
+                                            height: screenHeight * 0.001,
+                                            margin: EdgeInsets.only(
+                                              top: screenHeight * 0.01,
+                                              bottom: screenHeight * 0.01,
+                                            ),
+                                            color: const Color(0XCCEFEFEF),
+                                          ),
+                                          Center(
+                                            child: SizedBox(
+                                              width: screenWidth * 0.5,
+                                              child: Text(
+                                                pickWalk
+                                                    ? "走路速度 < 3 公里/小時"
+                                                    : pickSlope
+                                                    ? "傾斜角度 < 5°"
+                                                    : "普通樓梯",
+                                                style: TextStyle(
+                                                  fontSize:
+                                                  screenWidth * 0.042,
+                                                  fontWeight:
+                                                  FontWeight.w500,
+                                                  color: Colors.white,
+                                                  decoration:
+                                                  TextDecoration.none,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
                                   transitionBuilder: (
-                                    context,
-                                    animation,
-                                    secondaryAnimation,
-                                    child,
-                                  ) {
+                                      context,
+                                      animation,
+                                      secondaryAnimation,
+                                      child,
+                                      ) {
                                     final curved = CurvedAnimation(
                                       parent: animation,
                                       curve: Curves.easeOutBack,
@@ -1012,9 +1083,9 @@ class _BodyMovementAState extends State<BodyMovementA> {
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
-                                    pickMedium
-                                        ? const Color(0XFF8F4B4B)
-                                        : const Color(0xFFE9E9E9),
+                                pickMedium
+                                    ? const Color(0XFF8F4B4B)
+                                    : const Color(0xFFE9E9E9),
                                 minimumSize: Size(
                                   screenWidth * 0.22,
                                   screenHeight * 0.046,
@@ -1022,12 +1093,12 @@ class _BodyMovementAState extends State<BodyMovementA> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                   side:
-                                      pickMedium
-                                          ? BorderSide(
-                                            color: Colors.black87,
-                                            width: 1,
-                                          )
-                                          : BorderSide.none,
+                                  pickMedium
+                                      ? BorderSide(
+                                    color: Colors.black87,
+                                    width: 1,
+                                  )
+                                      : BorderSide.none,
                                 ),
                                 elevation: 5,
                               ),
@@ -1055,100 +1126,105 @@ class _BodyMovementAState extends State<BodyMovementA> {
                                   context: context,
                                   barrierDismissible: true,
                                   barrierLabel:
-                                      MaterialLocalizations.of(
-                                        context,
-                                      ).modalBarrierDismissLabel,
+                                  MaterialLocalizations.of(
+                                    context,
+                                  ).modalBarrierDismissLabel,
                                   transitionDuration: const Duration(
                                     milliseconds: 300,
                                   ),
                                   pageBuilder:
                                       (
-                                        context,
-                                        animation,
-                                        secondaryAnimation,
+                                      context,
+                                      animation,
+                                      secondaryAnimation,
                                       ) => Center(
-                                        child: Container(
-                                          width: screenWidth * 0.6,
-                                          height: screenHeight * 0.1,
-                                          decoration: BoxDecoration(
-                                            color: const Color(0XCC101010),
-                                            borderRadius: BorderRadius.circular(
-                                              10,
-                                            ),
-                                          ),
-                                          child: Column(
-                                            children: [
-                                              SizedBox(
-                                                height: screenHeight * 0.038,
-                                                child: Row(
-                                                  children: [
-                                                    Container(
-                                                      width: screenWidth * 0.445,
-                                                      margin: EdgeInsets.only(
-                                                        left:
-                                                            screenWidth * 0.03,
-                                                      ),
-                                                    ),
-                                                    Container(
-                                                      margin: EdgeInsets.only(
-                                                        top:
-                                                            screenHeight *
-                                                            0.004,
-                                                      ),
-                                                      child: IconButton(
-                                                        icon: Icon(
-                                                          Icons.clear,
-                                                          color: Colors.white,
-                                                          size:
-                                                              screenWidth *
-                                                              0.06,
-                                                        ),
-                                                        onPressed: () {
-                                                          Navigator.of(
-                                                            context,
-                                                          ).pop();
-                                                        },
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              Container(
-                                                height: screenHeight * 0.001,
-                                                margin: EdgeInsets.only(
-                                                  top: screenHeight * 0.01,
-                                                  bottom: screenHeight * 0.01,
-                                                ),
-                                                color: const Color(0XCCEFEFEF),
-                                              ),
-                                              Center(
-                                                child: SizedBox(
-                                                  width: screenWidth * 0.5,
-                                                  child: Text(
-                                                    pickWalk ? "走路速度 3-5 公里/小時" : pickSlope ? "傾斜角度 < 5 - 15°" : "陡峭樓梯(35 - 50°)",
-                                                    style: TextStyle(
-                                                      fontSize:
-                                                          screenWidth * 0.042,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      color: Colors.white,
-                                                      decoration:
-                                                          TextDecoration.none,
-                                                    ),
-                                                    textAlign: TextAlign.center,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                                    child: Container(
+                                      width: screenWidth * 0.6,
+                                      height: screenHeight * 0.1,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0XCC101010),
+                                        borderRadius: BorderRadius.circular(
+                                          10,
                                         ),
                                       ),
+                                      child: Column(
+                                        children: [
+                                          SizedBox(
+                                            height: screenHeight * 0.038,
+                                            child: Row(
+                                              children: [
+                                                Container(
+                                                  width:
+                                                  screenWidth * 0.445,
+                                                  margin: EdgeInsets.only(
+                                                    left:
+                                                    screenWidth * 0.03,
+                                                  ),
+                                                ),
+                                                Container(
+                                                  margin: EdgeInsets.only(
+                                                    top:
+                                                    screenHeight *
+                                                        0.004,
+                                                  ),
+                                                  child: IconButton(
+                                                    icon: Icon(
+                                                      Icons.clear,
+                                                      color: Colors.white,
+                                                      size:
+                                                      screenWidth *
+                                                          0.06,
+                                                    ),
+                                                    onPressed: () {
+                                                      Navigator.of(
+                                                        context,
+                                                      ).pop();
+                                                    },
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Container(
+                                            height: screenHeight * 0.001,
+                                            margin: EdgeInsets.only(
+                                              top: screenHeight * 0.01,
+                                              bottom: screenHeight * 0.01,
+                                            ),
+                                            color: const Color(0XCCEFEFEF),
+                                          ),
+                                          Center(
+                                            child: SizedBox(
+                                              width: screenWidth * 0.5,
+                                              child: Text(
+                                                pickWalk
+                                                    ? "走路速度 3-5 公里/小時"
+                                                    : pickSlope
+                                                    ? "傾斜角度 < 5 - 15°"
+                                                    : "陡峭樓梯(35 - 50°)",
+                                                style: TextStyle(
+                                                  fontSize:
+                                                  screenWidth * 0.042,
+                                                  fontWeight:
+                                                  FontWeight.w500,
+                                                  color: Colors.white,
+                                                  decoration:
+                                                  TextDecoration.none,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
                                   transitionBuilder: (
-                                    context,
-                                    animation,
-                                    secondaryAnimation,
-                                    child,
-                                  ) {
+                                      context,
+                                      animation,
+                                      secondaryAnimation,
+                                      child,
+                                      ) {
                                     final curved = CurvedAnimation(
                                       parent: animation,
                                       curve: Curves.easeOutBack,
@@ -1184,9 +1260,9 @@ class _BodyMovementAState extends State<BodyMovementA> {
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
-                                    pickHigh
-                                        ? const Color(0XFF8F4B4B)
-                                        : const Color(0xFFE9E9E9),
+                                pickHigh
+                                    ? const Color(0XFF8F4B4B)
+                                    : const Color(0xFFE9E9E9),
                                 minimumSize: Size(
                                   screenWidth * 0.22,
                                   screenHeight * 0.046,
@@ -1194,12 +1270,12 @@ class _BodyMovementAState extends State<BodyMovementA> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                   side:
-                                      pickHigh
-                                          ? BorderSide(
-                                            color: Colors.black87,
-                                            width: 1,
-                                          )
-                                          : BorderSide.none,
+                                  pickHigh
+                                      ? BorderSide(
+                                    color: Colors.black87,
+                                    width: 1,
+                                  )
+                                      : BorderSide.none,
                                 ),
                                 elevation: 5,
                               ),
@@ -1227,100 +1303,105 @@ class _BodyMovementAState extends State<BodyMovementA> {
                                   context: context,
                                   barrierDismissible: true,
                                   barrierLabel:
-                                      MaterialLocalizations.of(
-                                        context,
-                                      ).modalBarrierDismissLabel,
+                                  MaterialLocalizations.of(
+                                    context,
+                                  ).modalBarrierDismissLabel,
                                   transitionDuration: const Duration(
                                     milliseconds: 300,
                                   ),
                                   pageBuilder:
                                       (
-                                        context,
-                                        animation,
-                                        secondaryAnimation,
+                                      context,
+                                      animation,
+                                      secondaryAnimation,
                                       ) => Center(
-                                        child: Container(
-                                          width: screenWidth * 0.6,
-                                          height: screenHeight * 0.1,
-                                          decoration: BoxDecoration(
-                                            color: const Color(0XCC101010),
-                                            borderRadius: BorderRadius.circular(
-                                              10,
-                                            ),
-                                          ),
-                                          child: Column(
-                                            children: [
-                                              SizedBox(
-                                                height: screenHeight * 0.038,
-                                                child: Row(
-                                                  children: [
-                                                    Container(
-                                                      width: screenWidth * 0.445,
-                                                      margin: EdgeInsets.only(
-                                                        left:
-                                                            screenWidth * 0.03,
-                                                      ),
-                                                    ),
-                                                    Container(
-                                                      margin: EdgeInsets.only(
-                                                        top:
-                                                            screenHeight *
-                                                            0.004,
-                                                      ),
-                                                      child: IconButton(
-                                                        icon: Icon(
-                                                          Icons.clear,
-                                                          color: Colors.white,
-                                                          size:
-                                                              screenWidth *
-                                                              0.06,
-                                                        ),
-                                                        onPressed: () {
-                                                          Navigator.of(
-                                                            context,
-                                                          ).pop();
-                                                        },
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              Container(
-                                                height: screenHeight * 0.001,
-                                                margin: EdgeInsets.only(
-                                                  top: screenHeight * 0.01,
-                                                  bottom: screenHeight * 0.01,
-                                                ),
-                                                color: const Color(0XCCEFEFEF),
-                                              ),
-                                              Center(
-                                                child: SizedBox(
-                                                  width: screenWidth * 0.5,
-                                                  child: Text(
-                                                    pickWalk ? "走路速度 > 5 公里/小時" : pickSlope ? "傾斜角度 > 15°" : "極度陡峭樓梯(> 50°)",
-                                                    style: TextStyle(
-                                                      fontSize:
-                                                          screenWidth * 0.042,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      color: Colors.white,
-                                                      decoration:
-                                                          TextDecoration.none,
-                                                    ),
-                                                    textAlign: TextAlign.center,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                                    child: Container(
+                                      width: screenWidth * 0.6,
+                                      height: screenHeight * 0.1,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0XCC101010),
+                                        borderRadius: BorderRadius.circular(
+                                          10,
                                         ),
                                       ),
+                                      child: Column(
+                                        children: [
+                                          SizedBox(
+                                            height: screenHeight * 0.038,
+                                            child: Row(
+                                              children: [
+                                                Container(
+                                                  width:
+                                                  screenWidth * 0.445,
+                                                  margin: EdgeInsets.only(
+                                                    left:
+                                                    screenWidth * 0.03,
+                                                  ),
+                                                ),
+                                                Container(
+                                                  margin: EdgeInsets.only(
+                                                    top:
+                                                    screenHeight *
+                                                        0.004,
+                                                  ),
+                                                  child: IconButton(
+                                                    icon: Icon(
+                                                      Icons.clear,
+                                                      color: Colors.white,
+                                                      size:
+                                                      screenWidth *
+                                                          0.06,
+                                                    ),
+                                                    onPressed: () {
+                                                      Navigator.of(
+                                                        context,
+                                                      ).pop();
+                                                    },
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Container(
+                                            height: screenHeight * 0.001,
+                                            margin: EdgeInsets.only(
+                                              top: screenHeight * 0.01,
+                                              bottom: screenHeight * 0.01,
+                                            ),
+                                            color: const Color(0XCCEFEFEF),
+                                          ),
+                                          Center(
+                                            child: SizedBox(
+                                              width: screenWidth * 0.5,
+                                              child: Text(
+                                                pickWalk
+                                                    ? "走路速度 > 5 公里/小時"
+                                                    : pickSlope
+                                                    ? "傾斜角度 > 15°"
+                                                    : "極度陡峭樓梯(> 50°)",
+                                                style: TextStyle(
+                                                  fontSize:
+                                                  screenWidth * 0.042,
+                                                  fontWeight:
+                                                  FontWeight.w500,
+                                                  color: Colors.white,
+                                                  decoration:
+                                                  TextDecoration.none,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
                                   transitionBuilder: (
-                                    context,
-                                    animation,
-                                    secondaryAnimation,
-                                    child,
-                                  ) {
+                                      context,
+                                      animation,
+                                      secondaryAnimation,
+                                      child,
+                                      ) {
                                     final curved = CurvedAnimation(
                                       parent: animation,
                                       curve: Curves.easeOutBack,
@@ -1344,19 +1425,73 @@ class _BodyMovementAState extends State<BodyMovementA> {
                 ),
               ],
               SizedBox(height: screenHeight * 0.04),
-              PONButton(
-                screenWidth: screenWidth,
-                screenHeight: screenHeight,
-                havePrevious: false,
-                haveNextPage: true,
-                previousText: "",
-                nextText: "下一步",
-                nextPage: LoadWeightPosition(
-                  haveTransportation: widget.haveTransportation,
-                  loadWeightText: _weight,
+              SizedBox(
+                width: screenWidth * 0.36,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    await _saveBodyMovementARatingPoints();
+
+                    if (!isGuest && context.mounted) {
+                      Navigator.pop(context);
+                    } else {
+                      if (context.mounted) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => LoadWeightPosition(
+                              haveTransportation: widget.haveTransportation,
+                              loadWeightText: _weight,
+                              userName: currentUser,
+                            ),
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: screenWidth * 0.036,
+                      vertical: screenHeight * 0.01,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (isGuest) ...[
+                        SizedBox(width: screenWidth * 0.036),
+                        Text(
+                          "下一步",
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.049,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(width: screenWidth * 0.03),
+                        Icon(
+                          Icons.arrow_forward,
+                          color: Colors.white,
+                          size: screenWidth * 0.064,
+                        ),
+                      ] else ...[
+                        Text(
+                          "保存",
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.049,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-                onTap: () => _saveBodyMovementARatingPoints(),
               ),
+              SizedBox(height: screenHeight * 0.02),
             ],
           ),
         ),
@@ -1387,12 +1522,15 @@ class _BodyMovementAState extends State<BodyMovementA> {
                 icon: Icon(Icons.home_outlined),
                 iconSize: screenWidth * 0.068,
                 color: Colors.black,
-                onPressed: () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => HomePage()),
-                    (Route<dynamic> route) => false,
-                  );
+                onPressed: () async {
+                  await clearGuestKeysForBM();
+                  if (context.mounted) {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => HomePage()),
+                          (Route<dynamic> route) => false,
+                    );
+                  }
                 },
               ),
             ],
@@ -1401,16 +1539,18 @@ class _BodyMovementAState extends State<BodyMovementA> {
             color: const Color(0xFFEFEFEF),
             child: Column(
               children: [
-                ProgressBar(
+                isGuest
+                    ? ProgressBar(
                   currentStep: 2,
-                  totalStep: widget.haveTransportation ? 9 : 7,
+                  totalStep: totalStep,
                   screenWidth: screenWidth,
                   screenHeight: screenHeight,
-                ),
+                )
+                    : SizedBox(height: screenHeight * 0.01),
                 ScoreBar(
                   labelText:
-                      "總分 : ${bodyMovementARatingPoints.toString().replaceAll(".0", "")} / 100 分",
-                  currentScore: bodyMovementARatingPoints,
+                  "總分 : ${_score.toString().replaceAll(".0", "")} / 100 分",
+                  currentScore: _score,
                   textSize: screenWidth * 0.038,
                   maxScore: 100,
                   barSize: screenWidth * 0.056,
@@ -1418,8 +1558,7 @@ class _BodyMovementAState extends State<BodyMovementA> {
                   screenHeight: screenHeight,
                 ),
                 SizedBox(height: screenHeight * 0.02),
-                testingWidget(screenWidth, screenHeight),
-                SizedBox(height: screenHeight * 0.043 - bottomPadding),
+                Expanded(child: testingWidget(screenWidth, screenHeight)),
               ],
             ),
           ),

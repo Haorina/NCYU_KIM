@@ -25,6 +25,8 @@ class BPRResult extends StatefulWidget {
     this.totalAdditionalPoints = 0.0,
     this.startPosture = "",
     this.endPosture = "",
+    this.userName,
+    this.reRecord,
   });
 
   final String videoPath;
@@ -37,6 +39,8 @@ class BPRResult extends StatefulWidget {
   final double totalBodyPosturePoints;
   final String startPosture;
   final String endPosture;
+  final String? userName;
+  final bool? reRecord;
 
   @override
   State<BPRResult> createState() => _BPRResultState();

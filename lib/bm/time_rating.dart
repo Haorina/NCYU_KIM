@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../user_define_widget/progress_bar.dart';
 import '../user_define_widget/score_bar.dart';
-import '../user_define_widget/previous_or_next_button.dart';
 import '../../main.dart';
 import 'body_movement_a_rating.dart';
+import 'body_movement_b_rating.dart';
 
 List<String> tableList1 = [
   "≤ 1",
@@ -39,20 +39,21 @@ List<String> tableList2 = [
 ];
 
 class BMTimeRating extends StatefulWidget {
-  const BMTimeRating({super.key});
+  final String? userName;
+  const BMTimeRating({super.key, this.userName});
 
   @override
   State<BMTimeRating> createState() => _BMTimeRatingState();
 }
 
 Widget title(
-  BuildContext context,
-  double screenWidth,
-  double screenHeight,
-  String titleText,
-  String contentTitleText,
-  String exampleText,
-) {
+    BuildContext context,
+    double screenWidth,
+    double screenHeight,
+    String titleText,
+    String contentTitleText,
+    String exampleText,
+    ) {
   return Row(
     mainAxisAlignment: MainAxisAlignment.start,
     children: [
@@ -76,89 +77,89 @@ Widget title(
             context: context,
             barrierDismissible: true,
             barrierLabel:
-                MaterialLocalizations.of(context).modalBarrierDismissLabel,
+            MaterialLocalizations.of(context).modalBarrierDismissLabel,
             transitionDuration: const Duration(milliseconds: 300),
             pageBuilder:
                 (context, animation, secondaryAnimation) => Center(
-                  child: Container(
-                    width: screenWidth * 0.85,
-                    height:
-                        titleText == "人力交通工具"
-                            ? screenHeight * 0.23
-                            : screenHeight * 0.18,
-                    decoration: BoxDecoration(
-                      color: const Color(0XCC101010),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          height: screenHeight * 0.038,
-                          child: Row(
-                            children: [
-                              Container(
-                                width: screenWidth * 0.69,
-                                margin: EdgeInsets.only(
-                                  top: screenHeight * 0.008,
-                                  left: screenWidth * 0.03,
-                                ),
-                              ),
-                              Container(
-                                margin: EdgeInsets.only(
-                                  top: screenHeight * 0.004,
-                                ),
-                                child: IconButton(
-                                  icon: Icon(
-                                    Icons.clear,
-                                    color: Colors.white,
-                                    size: screenWidth * 0.06,
-                                  ),
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          height: screenHeight * 0.001,
-                          margin: EdgeInsets.only(
-                            top: screenHeight * 0.01,
-                            bottom: screenHeight * 0.01,
-                          ),
-                          color: const Color(0XCCEFEFEF),
-                        ),
-                        Center(
-                          child: SizedBox(
-                            width: screenWidth * 0.75,
-                            child: Text(
-                              contentTitleText,
-                              style: TextStyle(
-                                fontSize: screenWidth * 0.042,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white,
-                                decoration: TextDecoration.none,
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          width: screenWidth * 0.75,
-                          child: Text(
-                            "ex:\n•$exampleText",
-                            style: TextStyle(
-                              fontSize: screenWidth * 0.038,
-                              fontWeight: FontWeight.normal,
-                              color: Colors.white,
-                              decoration: TextDecoration.none,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+              child: Container(
+                width: screenWidth * 0.85,
+                height:
+                titleText == "人力交通工具"
+                    ? screenHeight * 0.23
+                    : screenHeight * 0.18,
+                decoration: BoxDecoration(
+                  color: const Color(0XCC101010),
+                  borderRadius: BorderRadius.circular(10),
                 ),
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: screenHeight * 0.038,
+                      child: Row(
+                        children: [
+                          Container(
+                            width: screenWidth * 0.69,
+                            margin: EdgeInsets.only(
+                              top: screenHeight * 0.008,
+                              left: screenWidth * 0.03,
+                            ),
+                          ),
+                          Container(
+                            margin: EdgeInsets.only(
+                              top: screenHeight * 0.004,
+                            ),
+                            child: IconButton(
+                              icon: Icon(
+                                Icons.clear,
+                                color: Colors.white,
+                                size: screenWidth * 0.06,
+                              ),
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      height: screenHeight * 0.001,
+                      margin: EdgeInsets.only(
+                        top: screenHeight * 0.01,
+                        bottom: screenHeight * 0.01,
+                      ),
+                      color: const Color(0XCCEFEFEF),
+                    ),
+                    Center(
+                      child: SizedBox(
+                        width: screenWidth * 0.75,
+                        child: Text(
+                          contentTitleText,
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.042,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                            decoration: TextDecoration.none,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: screenWidth * 0.75,
+                      child: Text(
+                        "ex:\n•$exampleText",
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.038,
+                          fontWeight: FontWeight.normal,
+                          color: Colors.white,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             transitionBuilder: (context, animation, secondaryAnimation, child) {
               final curved = CurvedAnimation(
                 parent: animation,
@@ -177,30 +178,102 @@ Widget title(
 }
 
 class _BMTimeRatingState extends State<BMTimeRating> {
-  int totalStep = 7;
   String gender = "male";
-  bool haveTransportation = false;
-  bool haveSupport = false;
   bool pickMale = true;
   bool pickFemale = false;
   String _times = tableList1[0];
+  bool haveTransportation = false;
+  bool haveSupport = false;
+  bool onlyTransportation = false;
   double _score = double.parse(tableList2[0]);
+  int totalStep = 7;
   final ScrollController _controller = ScrollController();
+  late String currentUser;
+  late bool isGuest;
 
   @override
   void initState() {
     super.initState();
+    currentUser = widget.userName ?? "vJ#CA:F3zP)C]A=V";
+
+    if (widget.userName != null && widget.userName != "vJ#CA:F3zP)C]A=V") {
+      isGuest = false;
+    } else {
+      isGuest = true;
+    }
+
+    _loadBMTimeRatingPoints();
+  }
+
+  Future<void> _loadBMTimeRatingPoints() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      gender = prefs.getString('Gender') ?? "male";
+      pickMale = prefs.getBool('PickMale') ?? true;
+      pickFemale = prefs.getBool('PickFemale') ?? false;
+      _times = prefs.getString('TimeLabel') ?? tableList1[0];
+      haveTransportation = prefs.getBool('HaveTransportation') ?? false;
+      haveSupport = prefs.getBool('HaveTransportSupport') ?? false;
+      onlyTransportation = prefs.getBool('OnlyTransportation') ?? false;
+      _score =
+          prefs.getDouble('TimeRatingPoints') ?? double.parse(tableList2[0]);
+      totalStep = prefs.getInt('TotalStep') ?? 7;
+    } else {
+      gender = prefs.getString('${widget.userName}_Gender') ?? "male";
+      pickMale = prefs.getBool('${widget.userName}_BM_PickMale') ?? true;
+      pickFemale = prefs.getBool('${widget.userName}_BM_PickFemale') ?? false;
+      _times =
+          prefs.getString('${widget.userName}_BM_TimeLabel') ?? tableList1[0];
+      haveTransportation =
+          prefs.getBool('${widget.userName}_BM_HaveTransportation') ?? false;
+      haveSupport =
+          prefs.getBool('${widget.userName}_BM_HaveTransportSupport') ?? false;
+      onlyTransportation =
+          prefs.getBool('${widget.userName}_BM_OnlyTransportation') ?? false;
+      _score =
+          prefs.getDouble('${widget.userName}_BM_TimeRatingPoints') ??
+              double.parse(tableList2[0]);
+      totalStep = prefs.getInt('${widget.userName}_BM_TotalStep') ?? 7;
+    }
+
+    setState(() {});
     update(_times);
   }
 
   Future<void> _saveTimeRatingPoints() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setInt("TotalSteps", totalStep);
-    await prefs.setString("Gender", gender);
-    await prefs.setBool("HaveTransportation", haveTransportation);
-    await prefs.setBool("HaveTransportSupport", haveSupport);
-    await prefs.setString('TimeText', _times);
-    await prefs.setDouble('TimeRatingPoints', _score);
+
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      await prefs.setString('Gender', gender);
+      await prefs.setBool('PickMale', pickMale);
+      await prefs.setBool('PickFemale', pickFemale);
+      await prefs.setString('TimeLabel', _times);
+      await prefs.setBool('HaveTransportation', haveTransportation);
+      await prefs.setBool('HaveTransportSupport', haveSupport);
+      await prefs.setBool('OnlyTransportation', onlyTransportation);
+      await prefs.setDouble('TimeRatingPoints', _score);
+      await prefs.setInt('TotalStep', totalStep);
+    } else {
+      await prefs.setString('${currentUser}_Gender', gender);
+      await prefs.setBool('${currentUser}_BM_PickMale', pickMale);
+      await prefs.setBool('${currentUser}_BM_PickFemale', pickFemale);
+      await prefs.setString('${currentUser}_BM_TimeLabel', _times);
+      await prefs.setBool(
+        '${currentUser}_BM_HaveTransportation',
+        haveTransportation,
+      );
+      await prefs.setBool(
+        '${currentUser}_BM_HaveTransportSupport',
+        haveSupport,
+      );
+      await prefs.setBool(
+        '${currentUser}_BM_OnlyTransportation',
+        onlyTransportation,
+      );
+      await prefs.setDouble('${currentUser}_BM_TimeRatingPoints', _score);
+      await prefs.setInt('${currentUser}_BM_TotalStep', totalStep);
+    }
   }
 
   void update(String value) {
@@ -208,8 +281,11 @@ class _BMTimeRatingState extends State<BMTimeRating> {
       double score = double.parse(tableList2[tableList1.indexOf(value)]);
       _times = value;
       _score = score;
-      _saveTimeRatingPoints();
     });
+
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      _saveTimeRatingPoints();
+    }
   }
 
   Widget select(double screenWidth, double screenHeight) {
@@ -236,44 +312,38 @@ class _BMTimeRatingState extends State<BMTimeRating> {
         underline: SizedBox(),
         borderRadius: BorderRadius.circular(10),
         items:
-            tableList1.map<DropdownMenuItem<String>>((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: StatefulBuilder(
-                  builder: (context, setState) {
-                    return Container(
-                      alignment: Alignment.center,
-                      margin: EdgeInsets.symmetric(
-                        horizontal: screenWidth * 0.02,
-                      ),
-                      decoration: BoxDecoration(
-                        color:
-                            _times == value
-                                ? Colors.grey.shade300
-                                : Colors.transparent,
-                        border:
-                            value == "10"
-                                ? null
-                                : Border(
-                                  bottom: BorderSide(
-                                    color: Colors.black54,
-                                    width: 1,
-                                  ),
-                                ),
-                      ),
-                      child: Text(
-                        "$value 分鐘",
-                        style: TextStyle(
-                          fontSize: screenWidth * 0.036,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                    );
-                  },
+        tableList1.map<DropdownMenuItem<String>>((String value) {
+          return DropdownMenuItem<String>(
+            value: value,
+            child: Container(
+              alignment: Alignment.center,
+              margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.02),
+              decoration: BoxDecoration(
+                color:
+                _times == value
+                    ? Colors.grey.shade300
+                    : Colors.transparent,
+                border:
+                value == tableList1.last
+                    ? null
+                    : Border(
+                  bottom: BorderSide(
+                    color: Colors.black54,
+                    width: 1,
+                  ),
                 ),
-              );
-            }).toList(),
+              ),
+              child: Text(
+                "$value 分鐘",
+                style: TextStyle(
+                  fontSize: screenWidth * 0.036,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
         selectedItemBuilder: (BuildContext context) {
           return tableList1.map((String value) {
             return Row(
@@ -351,16 +421,16 @@ class _BMTimeRatingState extends State<BMTimeRating> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor:
-                        pickMale
-                            ? const Color(0XFF6F8FA8)
-                            : const Color(0xFFE9E9E9),
+                    pickMale
+                        ? const Color(0XFF6F8FA8)
+                        : const Color(0xFFE9E9E9),
                     minimumSize: Size(screenWidth * 0.24, screenHeight * 0.04),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                       side:
-                          pickMale
-                              ? BorderSide(color: Colors.black87, width: 1)
-                              : BorderSide.none,
+                      pickMale
+                          ? BorderSide(color: Colors.black87, width: 1)
+                          : BorderSide.none,
                     ),
                     elevation: 5,
                   ),
@@ -382,16 +452,16 @@ class _BMTimeRatingState extends State<BMTimeRating> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor:
-                        pickFemale
-                            ? const Color(0XFF6F8FA8)
-                            : const Color(0xFFE9E9E9),
+                    pickFemale
+                        ? const Color(0XFF6F8FA8)
+                        : const Color(0xFFE9E9E9),
                     minimumSize: Size(screenWidth * 0.24, screenHeight * 0.04),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                       side:
-                          pickFemale
-                              ? BorderSide(color: Colors.black87, width: 1)
-                              : BorderSide.none,
+                      pickFemale
+                          ? BorderSide(color: Colors.black87, width: 1)
+                          : BorderSide.none,
                     ),
                     elevation: 5,
                   ),
@@ -510,16 +580,16 @@ class _BMTimeRatingState extends State<BMTimeRating> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor:
-                        haveTransportation
-                            ? const Color(0XFF6F8FA8)
-                            : const Color(0xFFE9E9E9),
+                    haveTransportation
+                        ? const Color(0XFF6F8FA8)
+                        : const Color(0xFFE9E9E9),
                     minimumSize: Size(screenWidth * 0.24, screenHeight * 0.04),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                       side:
-                          haveTransportation
-                              ? BorderSide(color: Colors.black87, width: 1)
-                              : BorderSide.none,
+                      haveTransportation
+                          ? BorderSide(color: Colors.black87, width: 1)
+                          : BorderSide.none,
                     ),
                     elevation: 5,
                   ),
@@ -540,16 +610,16 @@ class _BMTimeRatingState extends State<BMTimeRating> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor:
-                        !haveTransportation
-                            ? const Color(0XFF6F8FA8)
-                            : const Color(0xFFE9E9E9),
+                    !haveTransportation
+                        ? const Color(0XFF6F8FA8)
+                        : const Color(0xFFE9E9E9),
                     minimumSize: Size(screenWidth * 0.24, screenHeight * 0.04),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                       side:
-                          !haveTransportation
-                              ? BorderSide(color: Colors.black87, width: 1)
-                              : BorderSide.none,
+                      !haveTransportation
+                          ? BorderSide(color: Colors.black87, width: 1)
+                          : BorderSide.none,
                     ),
                     elevation: 5,
                   ),
@@ -565,88 +635,317 @@ class _BMTimeRatingState extends State<BMTimeRating> {
             ),
             SizedBox(height: screenHeight * 0.03),
             if (haveTransportation) ...[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              Column(
                 children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      totalStep = 9;
-                      haveSupport = true;
-                      update(_times);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          haveSupport = true;
+                          update(_times);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
                           haveSupport
                               ? const Color(0XFF8F4B4B)
                               : const Color(0xFFE9E9E9),
-                      minimumSize: Size(
-                        screenWidth * 0.24,
-                        screenHeight * 0.05,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        side:
+                          minimumSize: Size(
+                            screenWidth * 0.24,
+                            screenHeight * 0.05,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side:
                             haveSupport
-                                ? BorderSide(color: Colors.black87, width: 1)
+                                ? BorderSide(
+                              color: Colors.black87,
+                              width: 1,
+                            )
                                 : BorderSide.none,
+                          ),
+                          elevation: 5,
+                        ),
+                        child: Text(
+                          "有電動輔助",
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.046,
+                            color: Colors.black87,
+                          ),
+                        ),
                       ),
-                      elevation: 5,
-                    ),
-                    child: Text(
-                      "有電動輔助",
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.046,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: screenWidth * 0.1),
-                  ElevatedButton(
-                    onPressed: () {
-                      totalStep = 6;
-                      haveSupport = false;
-                      update(_times);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
+                      SizedBox(width: screenWidth * 0.1),
+                      ElevatedButton(
+                        onPressed: () {
+                          haveSupport = false;
+                          update(_times);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
                           !haveSupport
                               ? const Color(0XFF8F4B4B)
                               : const Color(0xFFE9E9E9),
-                      minimumSize: Size(
-                        screenWidth * 0.24,
-                        screenHeight * 0.05,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        side:
+                          minimumSize: Size(
+                            screenWidth * 0.24,
+                            screenHeight * 0.05,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side:
                             !haveSupport
-                                ? BorderSide(color: Colors.black87, width: 1)
+                                ? BorderSide(
+                              color: Colors.black87,
+                              width: 1,
+                            )
                                 : BorderSide.none,
+                          ),
+                          elevation: 5,
+                        ),
+                        child: Text(
+                          "無電動輔助",
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.046,
+                            color: Colors.black87,
+                          ),
+                        ),
                       ),
-                      elevation: 5,
-                    ),
+                    ],
+                  ),
+                  SizedBox(height: screenHeight * 0.03),
+                  SizedBox(
                     child: Text(
-                      "無電動輔助",
+                      "是否全程使用人力交通工具",
                       style: TextStyle(
                         fontSize: screenWidth * 0.046,
                         color: Colors.black87,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
+                  ),
+                  SizedBox(height: screenHeight * 0.02),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          totalStep = 5;
+                          onlyTransportation = true;
+                          update(_times);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                          onlyTransportation
+                              ? const Color(0XFF8F4B4B)
+                              : const Color(0xFFE9E9E9),
+                          minimumSize: Size(
+                            screenWidth * 0.24,
+                            screenHeight * 0.05,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side:
+                            onlyTransportation
+                                ? BorderSide(
+                              color: Colors.black87,
+                              width: 1,
+                            )
+                                : BorderSide.none,
+                          ),
+                          elevation: 5,
+                        ),
+                        child: Text(
+                          "是",
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.046,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: screenWidth * 0.1),
+                      ElevatedButton(
+                        onPressed: () {
+                          totalStep = 9;
+                          onlyTransportation = false;
+                          update(_times);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                          !onlyTransportation
+                              ? const Color(0XFF8F4B4B)
+                              : const Color(0xFFE9E9E9),
+                          minimumSize: Size(
+                            screenWidth * 0.24,
+                            screenHeight * 0.05,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side:
+                            !onlyTransportation
+                                ? BorderSide(
+                              color: Colors.black87,
+                              width: 1,
+                            )
+                                : BorderSide.none,
+                          ),
+                          elevation: 5,
+                        ),
+                        child: Text(
+                          "否",
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.046,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
               SizedBox(height: screenHeight * 0.04),
             ],
-            PONButton(
-              screenWidth: screenWidth,
-              screenHeight: screenHeight,
-              havePrevious: false,
-              haveNextPage: true,
-              previousText: "",
-              nextText: "下一步",
-              nextPage: BodyMovementA(haveTransportation: haveTransportation),
-              onTap: () => _saveTimeRatingPoints(),
+            SizedBox(
+              width: screenWidth * 0.36,
+              child: ElevatedButton(
+                onPressed: () async {
+                  await _saveTimeRatingPoints();
+
+                  if (!isGuest && mounted) {
+                    if (!haveTransportation) {
+                      SharedPreferences prefs =
+                      await SharedPreferences.getInstance();
+
+                      await prefs.remove(
+                        '${widget.userName}_BM_TransportationWeightLabel',
+                      );
+                      await prefs.remove('${widget.userName}_BM_SpeedLabel');
+                      await prefs.remove(
+                        '${widget.userName}_BM_BodyMovementBRatingPoints',
+                      );
+                      await prefs.remove(
+                        '${widget.userName}_BM_RoadConditionSelect',
+                      );
+                      await prefs.remove(
+                        '${widget.userName}_BM_RoadConditionOften',
+                      );
+                      await prefs.remove(
+                        '${widget.userName}_BM_RoadConditionRatingPoints',
+                      );
+                    }
+
+                    if (onlyTransportation) {
+                      SharedPreferences prefs =
+                      await SharedPreferences.getInstance();
+
+                      await prefs.remove('${widget.userName}_BM_WeightLabel');
+                      await prefs.remove('${widget.userName}_BM_PickWalk');
+                      await prefs.remove('${widget.userName}_BM_PickSlope');
+                      await prefs.remove('${widget.userName}_BM_PickStair');
+                      await prefs.remove('${widget.userName}_BM_PickLow');
+                      await prefs.remove('${widget.userName}_BM_PickMedium');
+                      await prefs.remove('${widget.userName}_BM_PickHigh');
+                      await prefs.remove(
+                        '${widget.userName}_BM_PickClimbStair',
+                      );
+                      await prefs.remove(
+                        '${widget.userName}_BM_PickClimbSteepStair',
+                      );
+                      await prefs.remove('${widget.userName}_BM_PickCrawl');
+                      await prefs.remove(
+                        '${widget.userName}_BM_BodyMovementARatingPoints',
+                      );
+                      await prefs.remove(
+                        '${widget.userName}_BM_PickLoadWeightPositionText',
+                      );
+                      await prefs.remove('${widget.userName}_BM_PickSupport');
+                      await prefs.remove('${widget.userName}_BM_PickClose');
+                      await prefs.remove('${widget.userName}_BM_PickAway');
+                      await prefs.remove(
+                        '${widget.userName}_BM_LoadWeightPositionRatingPoints',
+                      );
+                      await prefs.remove(
+                        '${widget.userName}_BM_PickBodyPostureText',
+                      );
+                      await prefs.remove(
+                        '${widget.userName}_BM_PickOccasionally',
+                      );
+                      await prefs.remove('${widget.userName}_BM_PickOften');
+                      await prefs.remove(
+                        '${widget.userName}_BM_BodyPostureRatingPoints',
+                      );
+                      await prefs.remove('${widget.userName}_BM_SpaceScore');
+                      await prefs.remove('${widget.userName}_BM_ClimateScore');
+                      await prefs.remove(
+                        '${widget.userName}_BM_WorkConditionRatingPoints',
+                      );
+                    }
+
+                    if (mounted) {
+                      Navigator.pop(context);
+                    }
+                  } else {
+                    if (mounted) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) =>
+                          onlyTransportation
+                              ? BodyMovementB(
+                            userName: widget.userName,
+                            haveTransportation: haveTransportation,
+                          )
+                              : BodyMovementA(
+                            userName: widget.userName,
+                            haveTransportation: haveTransportation,
+                          ),
+                        ),
+                      );
+                    }
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: screenWidth * 0.036,
+                    vertical: screenHeight * 0.01,
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (isGuest) ...[
+                      SizedBox(width: screenWidth * 0.036),
+                      Text(
+                        "下一步",
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.049,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(width: screenWidth * 0.03),
+                      Icon(
+                        Icons.arrow_forward,
+                        color: Colors.white,
+                        size: screenWidth * 0.064,
+                      ),
+                    ] else ...[
+                      Text(
+                        "保存",
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.049,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
+            SizedBox(height: screenHeight * 0.02),
           ],
         ),
       ),
@@ -661,7 +960,6 @@ class _BMTimeRatingState extends State<BMTimeRating> {
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.sizeOf(context).width;
     double screenHeight = MediaQuery.sizeOf(context).height;
-    double bottomPadding = MediaQuery.paddingOf(context).bottom;
 
     return Container(
       color: Colors.white,
@@ -687,12 +985,16 @@ class _BMTimeRatingState extends State<BMTimeRating> {
                 icon: Icon(Icons.home_outlined),
                 iconSize: screenWidth * 0.068,
                 color: Colors.black,
-                onPressed: () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => HomePage()),
-                    (Route<dynamic> route) => false,
-                  );
+                onPressed: () async {
+                  await clearGuestKeysForBM();
+
+                  if (context.mounted) {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => HomePage()),
+                          (Route<dynamic> route) => false,
+                    );
+                  }
                 },
               ),
             ],
@@ -701,15 +1003,17 @@ class _BMTimeRatingState extends State<BMTimeRating> {
             color: const Color(0xFFEFEFEF),
             child: Column(
               children: [
-                ProgressBar(
+                isGuest
+                    ? ProgressBar(
                   currentStep: 1,
-                  totalStep: haveTransportation ? 9 : 7,
+                  totalStep: totalStep,
                   screenWidth: screenWidth,
                   screenHeight: screenHeight,
-                ),
+                )
+                    : SizedBox(height: screenHeight * 0.01),
                 ScoreBar(
                   labelText:
-                      "總分 : ${_score.toString().replaceAll(".0", "")} / 10 分",
+                  "總分 : ${_score.toString().replaceAll(".0", "")} / 10 分",
                   currentScore: _score,
                   textSize: screenWidth * 0.038,
                   maxScore: 10,
@@ -718,7 +1022,6 @@ class _BMTimeRatingState extends State<BMTimeRating> {
                   screenHeight: screenHeight,
                 ),
                 testingWidget(screenWidth, screenHeight),
-                SizedBox(height: screenHeight * 0.043 - bottomPadding),
               ],
             ),
           ),

@@ -11,26 +11,37 @@ import '../../main.dart';
 
 class LHCVideoRecording extends StatefulWidget {
   final List<CameraDescription> camera;
+  final String? userName;
+  final bool? reRecord;
 
-  const LHCVideoRecording({super.key, required this.camera});
+  const LHCVideoRecording({
+    super.key,
+    this.userName,
+    required this.camera,
+    this.reRecord,
+  });
 
   @override
   State<LHCVideoRecording> createState() => _LHCVideoRecordingState();
 }
 
 class VideoSelection {
-  Future<void> pickVideo(BuildContext context) async {
+  Future<void> pickVideo(BuildContext context, String currentUser, {bool reRecord = false}) async {
     final ImagePicker picker = ImagePicker();
     final XFile? video = await picker.pickVideo(source: ImageSource.gallery);
-    if (video != null) {
-      if (context.mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => BPRVideoAnalysing(videoPath: video.path),
+
+    if (video != null && context.mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => BPRVideoAnalysing(
+            userName: currentUser,
+            videoPath: video.path,
+            reRecord: reRecord,
           ),
-        );
-      }
+        ),
+      );
     }
   }
 }
@@ -41,46 +52,59 @@ class _LHCVideoRecordingState extends State<LHCVideoRecording> {
   int selectedCameraIdx = 0;
   bool _isRecording = false;
   final VideoSelection _videoSelector = VideoSelection();
+  late String currentUser;
+  late bool isGuest;
 
   @override
   void initState() {
     super.initState();
+    currentUser = widget.userName ?? "vJ#CA:F3zP)C]A=V";
+
+    if (widget.userName != null && widget.userName != "vJ#CA:F3zP)C]A=V") {
+      isGuest = false;
+    } else {
+      isGuest = true;
+    }
 
     _controller = CameraController(
       widget.camera[selectedCameraIdx],
       ResolutionPreset.high,
     );
-
     _initializeControllerFuture = _controller.initialize();
   }
 
   @override
   void dispose() {
-    super.dispose();
     _controller.dispose();
+    super.dispose();
   }
 
-  Future<void> toggleRecording(BuildContext context) async {
+  Future<void> toggleRecording(BuildContext context, {bool reRecord = false}) async {
     if (_isRecording) {
       final file = await _controller.stopVideoRecording();
-      final tempDir = await getTemporaryDirectory(); // ✅ 改這裡
-      final videoPath = '${tempDir.path}/${DateTime.now().toIso8601String()}.mp4';
+      final String directory = (await getApplicationDocumentsDirectory()).path;
+      final String videoPath =
+          '$directory/${DateTime.now().toIso8601String()}.mp4';
       await file.saveTo(videoPath);
-
-// 等待檔案穩定
-      await Future.delayed(const Duration(milliseconds: 300));
-
       await Gal.putVideo(videoPath, album: "KIM_VID");
+
+      setState(() {
+        _isRecording = false;
+      });
 
       if (context.mounted) {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => BPRVideoAnalysing(videoPath: videoPath),
+            builder:
+                (context) => BPRVideoAnalysing(
+              userName: currentUser,
+              videoPath: videoPath,
+              reRecord: reRecord,
+            ),
           ),
         );
       }
-
     } else {
       await _controller.startVideoRecording();
       setState(() {
@@ -91,24 +115,11 @@ class _LHCVideoRecordingState extends State<LHCVideoRecording> {
 
   void onSwitchCamera() {
     selectedCameraIdx = (selectedCameraIdx == 0) ? 1 : 0;
-
     _controller = CameraController(
       widget.camera[selectedCameraIdx],
       ResolutionPreset.high,
     );
-
-    _initializeControllerFuture = _controller.initialize().then((_) {
-      if (mounted) {
-        setState(() {});
-      }
-    }).catchError((e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('攝影機切換失敗: $e')),
-        );
-      }
-    });
-
+    _initializeControllerFuture = _controller.initialize();
     setState(() {});
   }
 
@@ -130,6 +141,7 @@ class _LHCVideoRecordingState extends State<LHCVideoRecording> {
               appBar: AppBar(
                 automaticallyImplyLeading: true,
                 centerTitle: true,
+                backgroundColor: const Color(0xFFEFEFEF),
                 title: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -146,7 +158,6 @@ class _LHCVideoRecordingState extends State<LHCVideoRecording> {
                     IconButton(
                       icon: Image.asset("assets/images/help-circle.png"),
                       iconSize: screenWidth * 0.056,
-                      color: Colors.black,
                       onPressed: () {
                         showGeneralDialog(
                           context: context,
@@ -157,87 +168,8 @@ class _LHCVideoRecordingState extends State<LHCVideoRecording> {
                           ).modalBarrierDismissLabel,
                           transitionDuration: const Duration(milliseconds: 300),
                           pageBuilder:
-                              (
-                              context,
-                              animation,
-                              secondaryAnimation,
-                              ) => Center(
-                            child: Container(
-                              width: screenWidth * 0.6,
-                              height: screenHeight * 0.15,
-                              decoration: BoxDecoration(
-                                color: const Color(0XCC101010),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Column(
-                                children: [
-                                  SizedBox(
-                                    height: screenHeight * 0.038,
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: screenWidth * 0.44,
-                                          margin: EdgeInsets.only(
-                                            top: screenHeight * 0.008,
-                                            left: screenWidth * 0.03,
-                                          ),
-                                          child: Text(
-                                            "拍攝建議",
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: screenWidth * 0.045,
-                                              fontWeight: FontWeight.bold,
-                                              decoration:
-                                              TextDecoration.none,
-                                            ),
-                                          ),
-                                        ),
-                                        Container(
-                                          margin: EdgeInsets.only(
-                                            top: screenHeight * 0.004,
-                                          ),
-                                          child: IconButton(
-                                            icon: Icon(
-                                              Icons.clear,
-                                              color: Colors.white,
-                                              size: screenWidth * 0.06,
-                                            ),
-                                            onPressed: () {
-                                              Navigator.of(context).pop();
-                                            },
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Container(
-                                    height: screenHeight * 0.001,
-                                    margin: EdgeInsets.only(
-                                      top: screenHeight * 0.01,
-                                      bottom: screenHeight * 0.02,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0XCCFFFFFF),
-                                    ),
-                                  ),
-                                  Center(
-                                    child: Text(
-                                      "拍攝角度建議為側面\n人體請全程入境",
-                                      style: TextStyle(
-                                        fontSize:
-                                        screenWidth * 0.04,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w500,
-                                        decoration:
-                                        TextDecoration.none,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                              (context, animation, secondaryAnimation) =>
+                              _buildHelpDialog(screenWidth, screenHeight),
                           transitionBuilder: (
                               context,
                               animation,
@@ -261,18 +193,21 @@ class _LHCVideoRecordingState extends State<LHCVideoRecording> {
                     ),
                   ],
                 ),
-                backgroundColor: const Color(0xFFEFEFEF),
                 actions: [
                   IconButton(
                     icon: Icon(Icons.home_outlined),
                     iconSize: screenWidth * 0.068,
                     color: Colors.black,
-                    onPressed: () {
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (context) => HomePage()),
-                            (Route<dynamic> route) => false,
-                      );
+                    onPressed: () async {
+                      await clearGuestKeysForLHC();
+
+                      if (context.mounted) {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (context) => HomePage()),
+                              (Route<dynamic> route) => false,
+                        );
+                      }
                     },
                   ),
                 ],
@@ -280,99 +215,181 @@ class _LHCVideoRecordingState extends State<LHCVideoRecording> {
               body:
               snapshot.connectionState == ConnectionState.done &&
                   _controller.value.isInitialized
-                  ? Container(
-                color: const Color(0xFFEFEFEF),
-                child: Column(
-                  children: [
-                    ProgressBar(
-                      currentStep: 2,
-                      totalStep: 7,
-                      screenWidth: screenWidth,
-                      screenHeight: screenHeight,
-                    ),
-                    SizedBox(height: screenHeight * 0.008),
-                    Expanded(
-                      child: SizedBox(
-                        width: screenWidth,
-                        child: CameraPreview(_controller),
-                      ),
-                    ),
-                    SizedBox(height: screenHeight * 0.018),
-                    Row(
-                      children: [
-                        SizedBox(width: screenWidth * 0.058),
-                        IconButton(
-                          icon: Icon(
-                            Icons.photo_library,
-                            size: screenWidth * 0.12,
-                            color: Colors.black,
-                          ),
-                          onPressed:
-                              () => _videoSelector.pickVideo(context),
-                        ),
-                        SizedBox(width: screenWidth * 0.2),
-                        Center(
-                          child: GestureDetector(
-                            onTap: () => toggleRecording(context),
-                            child: Container(
-                              width: screenWidth * 0.18,
-                              height: screenHeight * 0.076,
-                              decoration: BoxDecoration(
-                                color:
-                                _isRecording
-                                    ? Colors.red
-                                    : Colors.black87,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                _isRecording ? Icons.stop : Icons.videocam,
-                                color: const Color(0xFFEFEFEF),
-                                size: screenWidth * 0.12,
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: screenWidth * 0.19),
-                        IconButton(
-                          icon: Icon(
-                            CupertinoIcons.arrow_2_circlepath,
-                            size: screenWidth * 0.12,
-                            color: Colors.black,
-                          ),
-                          onPressed: () async {
-                            await _controller.dispose();
-                            onSwitchCamera();
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                  ? _buildCameraView(
+                screenWidth,
+                screenHeight,
+                bottomPadding,
+                context,
               )
-                  : Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      "鏡頭準備中...",
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.066,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    LoadingAnimationWidget.waveDots(
-                      color: const Color(0xff808080),
-                      size: screenWidth * 0.25,
-                    ),
-                  ],
-                ),
-              ),
+                  : _buildLoading(screenWidth),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildCameraView(
+      double screenWidth,
+      double screenHeight,
+      double bottomPadding,
+      BuildContext context,
+      ) {
+    return Container(
+      color: const Color(0xFFEFEFEF),
+      child: Column(
+        children: [
+          isGuest
+              ? ProgressBar(
+            currentStep: 2,
+            totalStep: 7,
+            screenWidth: screenWidth,
+            screenHeight: screenHeight,
+          )
+              : SizedBox(height: screenHeight * 0.01),
+          SizedBox(height: screenHeight * 0.008),
+          SizedBox(
+            width: screenWidth,
+            height: screenHeight * 0.76 - bottomPadding,
+            child: CameraPreview(_controller),
+          ),
+          SizedBox(height: screenHeight * 0.012),
+          Row(
+            children: [
+              SizedBox(width: screenWidth * 0.058),
+              IconButton(
+                icon: Icon(
+                  Icons.photo_library,
+                  size: screenWidth * 0.12,
+                  color: Colors.black,
+                ),
+                onPressed: () => _videoSelector.pickVideo(context, currentUser, reRecord: widget.reRecord ?? false),
+              ),
+              SizedBox(width: screenWidth * 0.19),
+              Center(
+                child: GestureDetector(
+                  onTap: () => toggleRecording(context, reRecord: widget.reRecord ?? false,),
+                  child: Container(
+                    width: screenWidth * 0.18,
+                    height: screenHeight * 0.076,
+                    decoration: BoxDecoration(
+                      color: _isRecording ? Colors.red : Colors.black87,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _isRecording ? Icons.stop : Icons.videocam,
+                      color: const Color(0xFFEFEFEF),
+                      size: screenWidth * 0.12,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: screenWidth * 0.19),
+              IconButton(
+                icon: Icon(
+                  CupertinoIcons.arrow_2_circlepath,
+                  size: screenWidth * 0.12,
+                  color: Colors.black,
+                ),
+                onPressed: () async {
+                  await _controller.dispose();
+                  onSwitchCamera();
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoading(double screenWidth) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            "鏡頭準備中...",
+            style: TextStyle(
+              fontSize: screenWidth * 0.066,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          LoadingAnimationWidget.waveDots(
+            color: const Color(0xff808080),
+            size: screenWidth * 0.25,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHelpDialog(double screenWidth, double screenHeight) {
+    return Center(
+      child: Container(
+        width: screenWidth * 0.6,
+        height: screenHeight * 0.15,
+        decoration: BoxDecoration(
+          color: const Color(0XCC101010),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          children: [
+            SizedBox(
+              height: screenHeight * 0.038,
+              child: Row(
+                children: [
+                  Container(
+                    width: screenWidth * 0.44,
+                    margin: EdgeInsets.only(
+                      top: screenHeight * 0.008,
+                      left: screenWidth * 0.03,
+                    ),
+                    child: Text(
+                      "拍攝建議",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: screenWidth * 0.045,
+                        fontWeight: FontWeight.bold,
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      Icons.clear,
+                      color: Colors.white,
+                      size: screenWidth * 0.06,
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              height: screenHeight * 0.001,
+              margin: EdgeInsets.only(
+                top: screenHeight * 0.01,
+                bottom: screenHeight * 0.02,
+              ),
+              color: const Color(0XCCFFFFFF),
+            ),
+            Center(
+              child: Text(
+                "拍攝角度建議為側面\n人體請全程入境",
+                style: TextStyle(
+                  fontSize: screenWidth * 0.04,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                  decoration: TextDecoration.none,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

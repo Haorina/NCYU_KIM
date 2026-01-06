@@ -18,12 +18,12 @@ class RadarChartPainter extends CustomPainter {
   final List<String> labels;
 
   void _drawDiagonals(
-    Canvas canvas,
-    double centerX,
-    double centerY,
-    double radius,
-    Paint paint,
-  ) {
+      Canvas canvas,
+      double centerX,
+      double centerY,
+      double radius,
+      Paint paint,
+      ) {
     for (int i = 0; i < currentScore.length; i++) {
       final angle = (i * pi * 2 / currentScore.length) - pi / 2;
       final dx = centerX + radius * cos(angle);
@@ -38,15 +38,15 @@ class RadarChartPainter extends CustomPainter {
     final radius = screenWidth * 0.6 / 2;
 
     final paint =
-        Paint()
-          ..color = const Color(0x8066DFEA)
-          ..style = PaintingStyle.fill;
+    Paint()
+      ..color = const Color(0x8066DFEA)
+      ..style = PaintingStyle.fill;
 
     final borderPaint =
-        Paint()
-          ..color = const Color(0xFF66DFEA)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2;
+    Paint()
+      ..color = const Color(0xFF66DFEA)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
 
     final path = Path();
     for (int i = 0; i < currentScore.length; i++) {
@@ -64,10 +64,10 @@ class RadarChartPainter extends CustomPainter {
     path.close();
 
     final gridPaint =
-        Paint()
-          ..color = const Color(0XFFCFCFCF)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2;
+    Paint()
+      ..color = const Color(0XFFCFCFCF)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
 
     for (int i = 1; i <= 5; i++) {
       final gridRadius = (i / 5) * radius;
@@ -95,10 +95,10 @@ class RadarChartPainter extends CustomPainter {
     canvas.drawPath(path, borderPaint);
 
     final diagonalPaint =
-        Paint()
-          ..color = const Color(0XFF9F9F9F)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1;
+    Paint()
+      ..color = const Color(0XFF9F9F9F)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
 
     _drawDiagonals(canvas, center.dx, center.dy, radius, diagonalPaint);
 
@@ -107,18 +107,36 @@ class RadarChartPainter extends CustomPainter {
       textAlign: TextAlign.center,
     );
     for (int i = 0; i < labels.length; i++) {
-      final angle = (2 * pi / labels.length) * i - pi / 2;
-      final x = center.dx + (radius + 45) * cos(angle);
-      final y = center.dy + (radius + 45) * sin(angle);
-      textPainter.text = TextSpan(
-        text: labels[i],
-        style: TextStyle(color: Colors.black87, fontSize: screenWidth * 0.034),
-      );
-      textPainter.layout();
-      textPainter.paint(
-        canvas,
-        Offset(x - textPainter.width / 2, y - textPainter.height / 2),
-      );
+      if(labels.length == 4) {
+        final angle = (2 * pi / labels.length) * i - pi / 2;
+        final x = center.dx + (radius + 38) * cos(angle);
+        final y = center.dy + (radius + 30) * sin(angle);
+
+        textPainter.text = TextSpan(
+          text: labels[i],
+          style: TextStyle(color: Colors.black87, fontSize: screenWidth * 0.034),
+        );
+        textPainter.layout();
+        textPainter.paint(
+          canvas,
+          Offset(x - textPainter.width / 2, y - textPainter.height / 2),
+        );
+      }
+      else {
+        final angle = (2 * pi / labels.length) * i - pi / 2;
+        final x = center.dx + (radius + 45) * cos(angle);
+        final y = center.dy + (radius + 45) * sin(angle);
+
+        textPainter.text = TextSpan(
+          text: labels[i],
+          style: TextStyle(color: Colors.black87, fontSize: screenWidth * 0.034),
+        );
+        textPainter.layout();
+        textPainter.paint(
+          canvas,
+          Offset(x - textPainter.width / 2, y - textPainter.height / 2),
+        );
+      }
     }
   }
 

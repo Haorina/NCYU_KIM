@@ -5,12 +5,12 @@ class StartTest extends StatelessWidget {
   const StartTest({super.key});
 
   Widget onTapWidget(
-    BuildContext context,
-    double screenWidth,
-    double screenHeight,
-    String text,
-    Widget nextPage,
-  ) {
+      BuildContext context,
+      double screenWidth,
+      double screenHeight,
+      String text,
+      Widget nextPage,
+      ) {
     return Builder(
       builder: (context) {
         return InkWell(
@@ -59,130 +59,130 @@ class StartTest extends StatelessWidget {
   }
 
   Widget showSelectDialog(
-    BuildContext context,
-    double screenWidth,
-    double screenHeight,
-    String text,
-  ) {
+      BuildContext context,
+      double screenWidth,
+      double screenHeight,
+      String text,
+      ) {
     return Builder(
       builder:
           (context) => InkWell(
-            onTap: () {
-              showDialog(
-                context: context,
-                builder:
-                    (context) => AlertDialog(
-                      backgroundColor: const Color(0xFFD9D9D9),
-                      title: Text(
-                        "選擇檢測項目",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w400,
-                          fontSize: screenWidth * 0.056,
-                          color: Colors.black87,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      content: SizedBox(
-                        height: screenHeight * 0.26,
-                        width: screenWidth,
-                        child: Column(
-                          children: [
-                            SizedBox(height: screenHeight * 0.02),
-                            onTapWidget(
-                              context,
-                              screenWidth,
-                              screenHeight,
-                              "快速選擇",
-                              SelectItem(),
-                            ),
-                            SizedBox(height: screenHeight * 0.02),
-                            onTapWidget(
-                              context,
-                              screenWidth,
-                              screenHeight,
-                              "選擇項目",
-                              SelectItem(),
-                            ),
-                          ],
-                        ),
-                      ),
-                      actions: [
-                        TextButton(
-                          child: Text(
-                            '返回',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w400,
-                              fontSize: screenWidth * 0.0426,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                      ],
-                    ),
-              );
-            },
-            child: Container(
-              height: screenHeight * 0.076,
-              alignment: Alignment.center,
-              margin: EdgeInsets.only(
-                top: screenHeight * 0.012,
-                left: screenWidth * 0.08,
-                right: screenWidth * 0.08,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.black87,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                text,
+        onTap: () {
+          showDialog(
+            context: context,
+            builder:
+                (context) => AlertDialog(
+              backgroundColor: const Color(0xFFD9D9D9),
+              title: Text(
+                "選擇檢測項目",
                 style: TextStyle(
-                  fontSize: screenWidth * 0.058,
-                  color: Colors.white,
+                  fontWeight: FontWeight.w400,
+                  fontSize: screenWidth * 0.056,
+                  color: Colors.black87,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              content: SizedBox(
+                height: screenHeight * 0.26,
+                width: screenWidth,
+                child: Column(
+                  children: [
+                    SizedBox(height: screenHeight * 0.02),
+                    onTapWidget(
+                      context,
+                      screenWidth,
+                      screenHeight,
+                      "快速選擇",
+                      SelectItem(),
+                    ),
+                    SizedBox(height: screenHeight * 0.02),
+                    onTapWidget(
+                      context,
+                      screenWidth,
+                      screenHeight,
+                      "選擇項目",
+                      SelectItem(),
+                    ),
+                  ],
                 ),
               ),
+              actions: [
+                TextButton(
+                  child: Text(
+                    '返回',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w400,
+                      fontSize: screenWidth * 0.0426,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+        child: Container(
+          height: screenHeight * 0.076,
+          alignment: Alignment.center,
+          margin: EdgeInsets.only(
+            top: screenHeight * 0.012,
+            left: screenWidth * 0.08,
+            right: screenWidth * 0.08,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.black87,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: screenWidth * 0.058,
+              color: Colors.white,
             ),
           ),
+        ),
+      ),
     );
   }
 
   Widget addNewTest(
-    BuildContext context,
-    double screenWidth,
-    double screenHeight,
-  ) {
+      BuildContext context,
+      double screenWidth,
+      double screenHeight,
+      ) {
     return Builder(
       builder:
           (context) => InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => SelectItem()),
-              );
-            },
-            child: Container(
-              height: screenHeight * 0.076,
-              alignment: Alignment.center,
-              margin: EdgeInsets.only(
-                top: screenHeight * 0.012,
-                left: screenWidth * 0.08,
-                right: screenWidth * 0.08,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.black87,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                "新增檢測",
-                style: TextStyle(
-                  fontSize: screenWidth * 0.058,
-                  color: Colors.white,
-                ),
-              ),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => SelectItem()),
+          );
+        },
+        child: Container(
+          height: screenHeight * 0.076,
+          alignment: Alignment.center,
+          margin: EdgeInsets.only(
+            top: screenHeight * 0.012,
+            left: screenWidth * 0.08,
+            right: screenWidth * 0.08,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.black87,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            "新增檢測",
+            style: TextStyle(
+              fontSize: screenWidth * 0.058,
+              color: Colors.white,
             ),
           ),
+        ),
+      ),
     );
   }
 

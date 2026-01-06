@@ -3,9 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
 import '../../user_define_widget/progress_bar.dart';
 import '../../user_define_widget/score_bar.dart';
-import '../user_define_widget/previous_or_next_button.dart';
 import 'work_organization_rating.dart';
-
 
 List<String> workConditionList1 = [
   "手/手臂關節已到極限",
@@ -16,7 +14,6 @@ List<String> workConditionList1 = [
   "握持/搬運情況",
 ];
 
-
 List<List<String>> workConditionList2 = [
   ["幾乎不", "偶爾", "經常"],
   ["不太", "稍微", "非常"],
@@ -26,7 +23,6 @@ List<List<String>> workConditionList2 = [
   ["正常", "受限", "不良"],
 ];
 
-
 List<List<String>> workConditionList3 = [
   ["0", "1", "2"],
   ["0", "1", "2"],
@@ -35,7 +31,6 @@ List<List<String>> workConditionList3 = [
   ["0", "1"],
   ["0", "2", "5"],
 ];
-
 
 List<List<String>> workConditionList4 = [
   ["unfavorableJoint"],
@@ -49,7 +44,6 @@ List<List<String>> workConditionList4 = [
     "carry_condition-difficult",
   ],
 ];
-
 
 Widget title1(BuildContext context, double screenWidth, double screenHeight) {
   return Row(
@@ -128,7 +122,7 @@ Widget title1(BuildContext context, double screenWidth, double screenHeight) {
                         child: Text(
                           "手部、手腕、肘關節的關節或前臂活動範圍接近或達到生理極限位置，超出舒適的工作範圍",
                           style: TextStyle(
-                            fontSize: screenWidth * 0.04,
+                            fontSize: screenWidth * 0.042,
                             fontWeight: FontWeight.w500,
                             color: Colors.white,
                             decoration: TextDecoration.none,
@@ -169,7 +163,6 @@ Widget title1(BuildContext context, double screenWidth, double screenHeight) {
   );
 }
 
-
 Widget title2(BuildContext context, double screenWidth, double screenHeight) {
   return Row(
     mainAxisAlignment: MainAxisAlignment.center,
@@ -184,7 +177,6 @@ Widget title2(BuildContext context, double screenWidth, double screenHeight) {
     ],
   );
 }
-
 
 Widget title3(BuildContext context, double screenWidth, double screenHeight) {
   return Row(
@@ -263,7 +255,7 @@ Widget title3(BuildContext context, double screenWidth, double screenHeight) {
                         child: Text(
                           "熱、不舒服的吹風、寒冷、潮濕",
                           style: TextStyle(
-                            fontSize: screenWidth * 0.04,
+                            fontSize: screenWidth * 0.042,
                             fontWeight: FontWeight.w500,
                             color: Colors.white,
                             decoration: TextDecoration.none,
@@ -292,7 +284,6 @@ Widget title3(BuildContext context, double screenWidth, double screenHeight) {
   );
 }
 
-
 Widget title4(BuildContext context, double screenWidth, double screenHeight) {
   return Container(
     alignment: Alignment.center,
@@ -305,7 +296,6 @@ Widget title4(BuildContext context, double screenWidth, double screenHeight) {
     ),
   );
 }
-
 
 Widget title5(BuildContext context, double screenWidth, double screenHeight) {
   return Row(
@@ -382,9 +372,9 @@ Widget title5(BuildContext context, double screenWidth, double screenHeight) {
                       child: SizedBox(
                         width: screenWidth * 0.65,
                         child: Text(
-                          "由於防護衣物或裝備增加額外身體負荷",
+                          "由於防護衣物或裝備增加額外身體負擔",
                           style: TextStyle(
-                            fontSize: screenWidth * 0.04,
+                            fontSize: screenWidth * 0.042,
                             fontWeight: FontWeight.w500,
                             color: Colors.white,
                             decoration: TextDecoration.none,
@@ -395,7 +385,7 @@ Widget title5(BuildContext context, double screenWidth, double screenHeight) {
                     SizedBox(
                       width: screenWidth * 0.65,
                       child: Text(
-                        "ex:\n•厚重雨衣、全身防護裝、呼吸防護具、裝備腰帶等",
+                        "ex:\n•厚重雨衣、全身防護裝、呼吸防護具、\n 裝備腰帶等",
                         style: TextStyle(
                           fontSize: screenWidth * 0.038,
                           fontWeight: FontWeight.normal,
@@ -425,7 +415,6 @@ Widget title5(BuildContext context, double screenWidth, double screenHeight) {
   );
 }
 
-
 Widget title6(BuildContext context, double screenWidth, double screenHeight) {
   return Row(
     mainAxisAlignment: MainAxisAlignment.center,
@@ -440,7 +429,6 @@ Widget title6(BuildContext context, double screenWidth, double screenHeight) {
     ],
   );
 }
-
 
 Widget body1(double screenWidth, double screenHeight) {
   return Container(
@@ -469,7 +457,6 @@ Widget body1(double screenWidth, double screenHeight) {
     ),
   );
 }
-
 
 Widget body2(double screenWidth, double screenHeight, String text) {
   return Container(
@@ -516,7 +503,6 @@ Widget body2(double screenWidth, double screenHeight, String text) {
   );
 }
 
-
 Widget body3(double screenWidth, double screenHeight) {
   return Container(
     alignment: Alignment.center,
@@ -544,7 +530,6 @@ Widget body3(double screenWidth, double screenHeight) {
     ),
   );
 }
-
 
 Widget body4(double screenWidth, double screenHeight, String text) {
   return Container(
@@ -592,7 +577,6 @@ Widget body4(double screenWidth, double screenHeight, String text) {
   );
 }
 
-
 Widget body5(double screenWidth, double screenHeight) {
   return Container(
     alignment: Alignment.center,
@@ -620,7 +604,6 @@ Widget body5(double screenWidth, double screenHeight) {
     ),
   );
 }
-
 
 Widget body6(double screenWidth, double screenHeight, String text) {
   return Container(
@@ -667,15 +650,13 @@ Widget body6(double screenWidth, double screenHeight, String text) {
   );
 }
 
-
 class WorkConditionRating extends StatefulWidget {
-  const WorkConditionRating({super.key});
-
+  final String? userName;
+  const WorkConditionRating({super.key, this.userName});
 
   @override
   State<WorkConditionRating> createState() => _WorkConditionRatingState();
 }
-
 
 class _WorkConditionRatingState extends State<WorkConditionRating> {
   String _text1 = workConditionList2[0][0];
@@ -691,19 +672,144 @@ class _WorkConditionRatingState extends State<WorkConditionRating> {
   int _score5 = int.parse(workConditionList3[4][0]);
   int _score6 = int.parse(workConditionList3[5][0]);
   int _totalScore = 0;
+  late String currentUser;
+  late bool isGuest;
 
+  @override
+  void initState() {
+    super.initState();
+    currentUser = widget.userName ?? "vJ#CA:F3zP)C]A=V";
 
-  Future<void> _saveWorkConditionRatingPoints(int score) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setInt("WorkConditionPoints", score);
-    await prefs.setInt("WorkConditionScore1", _score1);
-    await prefs.setInt("WorkConditionScore2", _score2);
-    await prefs.setInt("WorkConditionScore3", _score3);
-    await prefs.setInt("WorkConditionScore4", _score4);
-    await prefs.setInt("WorkConditionScore5", _score5);
-    await prefs.setInt("WorkConditionScore6", _score6);
+    if (widget.userName != null && widget.userName != "vJ#CA:F3zP)C]A=V") {
+      isGuest = false;
+    } else {
+      isGuest = true;
+    }
+
+    _loadWorkConditionRatingPoints();
   }
 
+  Future<void> _loadWorkConditionRatingPoints() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      _text1 =
+          prefs.getString('WorkConditionLabel1') ?? workConditionList2[0][0];
+      _text2 =
+          prefs.getString('WorkConditionLabel2') ?? workConditionList2[1][0];
+      _text3 =
+          prefs.getString('WorkConditionLabel3') ?? workConditionList2[2][0];
+      _text4 =
+          prefs.getString('WorkConditionLabel4') ?? workConditionList2[3][0];
+      _text5 =
+          prefs.getString('WorkConditionLabel5') ?? workConditionList2[4][0];
+      _text6 =
+          prefs.getString('WorkConditionLabel6') ?? workConditionList2[5][0];
+      _score1 =
+          prefs.getInt('WorkConditionScore1') ??
+              int.parse(workConditionList3[0][0]);
+      _score2 =
+          prefs.getInt('WorkConditionScore2') ??
+              int.parse(workConditionList3[1][0]);
+      _score3 =
+          prefs.getInt('WorkConditionScore3') ??
+              int.parse(workConditionList3[2][0]);
+      _score4 =
+          prefs.getInt('WorkConditionScore4') ??
+              int.parse(workConditionList3[3][0]);
+      _score5 =
+          prefs.getInt('WorkConditionScore5') ??
+              int.parse(workConditionList3[4][0]);
+      _score6 =
+          prefs.getInt('WorkConditionScore6') ??
+              int.parse(workConditionList3[5][0]);
+      _totalScore = prefs.getInt('WorkConditionRatingPoints') ?? 0;
+    } else {
+      _text1 =
+          prefs.getString('${widget.userName}_LHC_WorkConditionLabel1') ?? "";
+      _text2 =
+          prefs.getString('${widget.userName}_LHC_WorkConditionLabel2') ?? "";
+      _text3 =
+          prefs.getString('${widget.userName}_LHC_WorkConditionLabel3') ?? "";
+      _text4 =
+          prefs.getString('${widget.userName}_LHC_WorkConditionLabel4') ?? "";
+      _text5 =
+          prefs.getString('${widget.userName}_LHC_WorkConditionLabel5') ?? "";
+      _text6 =
+          prefs.getString('${widget.userName}_LHC_WorkConditionLabel6') ?? "";
+      _score1 = prefs.getInt('${widget.userName}_LHC_WorkConditionScore1') ?? 0;
+      _score2 = prefs.getInt('${widget.userName}_LHC_WorkConditionScore2') ?? 0;
+      _score3 = prefs.getInt('${widget.userName}_LHC_WorkConditionScore3') ?? 0;
+      _score4 = prefs.getInt('${widget.userName}_LHC_WorkConditionScore4') ?? 0;
+      _score5 = prefs.getInt('${widget.userName}_LHC_WorkConditionScore5') ?? 0;
+      _score6 = prefs.getInt('${widget.userName}_LHC_WorkConditionScore6') ?? 0;
+      _totalScore =
+          prefs.getInt('${widget.userName}_LHC_WorkConditionRatingPoints') ?? 0;
+    }
+
+    update1(_text1);
+    update2(_text2);
+    update3(_text3);
+    update4(_text4);
+    update5(_text5);
+    update6(_text6);
+  }
+
+  Future<void> _saveWorkConditionRatingPoints() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    _totalScore = _score1 + _score2 + _score3 + _score4 + _score5 + _score6;
+
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      await prefs.setString('WorkConditionLabel1', _text1);
+      await prefs.setString('WorkConditionLabel2', _text2);
+      await prefs.setString('WorkConditionLabel3', _text3);
+      await prefs.setString('WorkConditionLabel4', _text4);
+      await prefs.setString('WorkConditionLabel5', _text5);
+      await prefs.setString('WorkConditionLabel6', _text6);
+      await prefs.setInt('WorkConditionScore1', _score1);
+      await prefs.setInt('WorkConditionScore2', _score2);
+      await prefs.setInt('WorkConditionScore3', _score3);
+      await prefs.setInt('WorkConditionScore4', _score4);
+      await prefs.setInt('WorkConditionScore5', _score5);
+      await prefs.setInt('WorkConditionScore6', _score6);
+      await prefs.setInt('WorkConditionRatingPoints', _totalScore);
+    } else {
+      await prefs.setString(
+        '${widget.userName}_LHC_WorkConditionLabel1',
+        _text1,
+      );
+      await prefs.setString(
+        '${widget.userName}_LHC_WorkConditionLabel2',
+        _text2,
+      );
+      await prefs.setString(
+        '${widget.userName}_LHC_WorkConditionLabel3',
+        _text3,
+      );
+      await prefs.setString(
+        '${widget.userName}_LHC_WorkConditionLabel4',
+        _text4,
+      );
+      await prefs.setString(
+        '${widget.userName}_LHC_WorkConditionLabel5',
+        _text5,
+      );
+      await prefs.setString(
+        '${widget.userName}_LHC_WorkConditionLabel6',
+        _text6,
+      );
+      await prefs.setInt('${widget.userName}_LHC_WorkConditionScore1', _score1);
+      await prefs.setInt('${widget.userName}_LHC_WorkConditionScore2', _score2);
+      await prefs.setInt('${widget.userName}_LHC_WorkConditionScore3', _score3);
+      await prefs.setInt('${widget.userName}_LHC_WorkConditionScore4', _score4);
+      await prefs.setInt('${widget.userName}_LHC_WorkConditionScore5', _score5);
+      await prefs.setInt('${widget.userName}_LHC_WorkConditionScore6', _score6);
+      await prefs.setInt(
+        '${widget.userName}_LHC_WorkConditionRatingPoints',
+        _totalScore,
+      );
+    }
+  }
 
   void update1(String value) {
     setState(() {
@@ -713,10 +819,12 @@ class _WorkConditionRatingState extends State<WorkConditionRating> {
       _text1 = value;
       _score1 = score;
       _totalScore = _score1 + _score2 + _score3 + _score4 + _score5 + _score6;
-      _saveWorkConditionRatingPoints(_totalScore);
+
+      if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+        _saveWorkConditionRatingPoints();
+      }
     });
   }
-
 
   void update2(String value) {
     setState(() {
@@ -726,10 +834,12 @@ class _WorkConditionRatingState extends State<WorkConditionRating> {
       _text2 = value;
       _score2 = score;
       _totalScore = _score1 + _score2 + _score3 + _score4 + _score5 + _score6;
-      _saveWorkConditionRatingPoints(_totalScore);
+
+      if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+        _saveWorkConditionRatingPoints();
+      }
     });
   }
-
 
   void update3(String value) {
     setState(() {
@@ -739,10 +849,12 @@ class _WorkConditionRatingState extends State<WorkConditionRating> {
       _text3 = value;
       _score3 = score;
       _totalScore = _score1 + _score2 + _score3 + _score4 + _score5 + _score6;
-      _saveWorkConditionRatingPoints(_totalScore);
+
+      if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+        _saveWorkConditionRatingPoints();
+      }
     });
   }
-
 
   void update4(String value) {
     setState(() {
@@ -752,10 +864,12 @@ class _WorkConditionRatingState extends State<WorkConditionRating> {
       _text4 = value;
       _score4 = score;
       _totalScore = _score1 + _score2 + _score3 + _score4 + _score5 + _score6;
-      _saveWorkConditionRatingPoints(_totalScore);
+
+      if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+        _saveWorkConditionRatingPoints();
+      }
     });
   }
-
 
   void update5(String value) {
     setState(() {
@@ -765,10 +879,12 @@ class _WorkConditionRatingState extends State<WorkConditionRating> {
       _text5 = value;
       _score5 = score;
       _totalScore = _score1 + _score2 + _score3 + _score4 + _score5 + _score6;
-      _saveWorkConditionRatingPoints(_totalScore);
+
+      if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+        _saveWorkConditionRatingPoints();
+      }
     });
   }
-
 
   void update6(String value) {
     setState(() {
@@ -778,10 +894,12 @@ class _WorkConditionRatingState extends State<WorkConditionRating> {
       _text6 = value;
       _score6 = score;
       _totalScore = _score1 + _score2 + _score3 + _score4 + _score5 + _score6;
-      _saveWorkConditionRatingPoints(_totalScore);
+
+      if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+        _saveWorkConditionRatingPoints();
+      }
     });
   }
-
 
   Widget select1(double screenWidth, double screenHeight) {
     return SizedBox(
@@ -823,7 +941,6 @@ class _WorkConditionRatingState extends State<WorkConditionRating> {
       ),
     );
   }
-
 
   Widget select2(double screenWidth, double screenHeight) {
     return SizedBox(
@@ -964,7 +1081,7 @@ class _WorkConditionRatingState extends State<WorkConditionRating> {
                                     child: Text(
                                       "需要額外注意或用力，但基本上能安全抓握",
                                       style: TextStyle(
-                                        fontSize: screenWidth * 0.04,
+                                        fontSize: screenWidth * 0.042,
                                         fontWeight: FontWeight.w500,
                                         color: Colors.white,
                                         decoration: TextDecoration.none,
@@ -1117,7 +1234,7 @@ class _WorkConditionRatingState extends State<WorkConditionRating> {
                                     child: Text(
                                       "抓握不穩定嚴重影響操作，或容易滑脫/受傷，或滑/軟/尖銳的邊緣，或無/不適當的握柄",
                                       style: TextStyle(
-                                        fontSize: screenWidth * 0.04,
+                                        fontSize: screenWidth * 0.042,
                                         fontWeight: FontWeight.w500,
                                         color: Colors.white,
                                         decoration: TextDecoration.none,
@@ -1168,7 +1285,6 @@ class _WorkConditionRatingState extends State<WorkConditionRating> {
     );
   }
 
-
   Widget select3(double screenWidth, double screenHeight) {
     return SizedBox(
       child: Row(
@@ -1209,7 +1325,6 @@ class _WorkConditionRatingState extends State<WorkConditionRating> {
       ),
     );
   }
-
 
   Widget select4(double screenWidth, double screenHeight) {
     return SizedBox(
@@ -1350,7 +1465,7 @@ class _WorkConditionRatingState extends State<WorkConditionRating> {
                                     child: Text(
                                       "工作空間 ＜ 1.5m²，或地板中度骯髒、輕度不平整，或輕微傾斜(不超過5°)，或輕度穩定度受限，或重物需放置精確",
                                       style: TextStyle(
-                                        fontSize: screenWidth * 0.04,
+                                        fontSize: screenWidth * 0.042,
                                         fontWeight: FontWeight.w500,
                                         color: Colors.white,
                                         decoration: TextDecoration.none,
@@ -1491,7 +1606,7 @@ class _WorkConditionRatingState extends State<WorkConditionRating> {
                                     child: Text(
                                       "活動的自由度嚴重受限、可活動的高度不足，或工作空間侷限，或地板非常骯髒、不平整或粗糙地面，如碎石、小坑洞，傾斜5-10°，或穩定度受限，重物需放置非常精確",
                                       style: TextStyle(
-                                        fontSize: screenWidth * 0.04,
+                                        fontSize: screenWidth * 0.042,
                                         fontWeight: FontWeight.w500,
                                         color: Colors.white,
                                         decoration: TextDecoration.none,
@@ -1529,7 +1644,6 @@ class _WorkConditionRatingState extends State<WorkConditionRating> {
       ),
     );
   }
-
 
   Widget select5(double screenWidth, double screenHeight) {
     return SizedBox(
@@ -1571,7 +1685,6 @@ class _WorkConditionRatingState extends State<WorkConditionRating> {
       ),
     );
   }
-
 
   Widget select6(double screenWidth, double screenHeight) {
     return SizedBox(
@@ -1684,7 +1797,7 @@ class _WorkConditionRatingState extends State<WorkConditionRating> {
                                     child: Text(
                                       "每次搬運/持握持續 < 5秒，搬運距離 < 2公尺",
                                       style: TextStyle(
-                                        fontSize: screenWidth * 0.04,
+                                        fontSize: screenWidth * 0.042,
                                         fontWeight: FontWeight.w500,
                                         color: Colors.white,
                                         decoration: TextDecoration.none,
@@ -1825,7 +1938,7 @@ class _WorkConditionRatingState extends State<WorkConditionRating> {
                                     child: Text(
                                       "每次搬運/持握持續5-10秒，搬運距離2-5公尺",
                                       style: TextStyle(
-                                        fontSize: screenWidth * 0.04,
+                                        fontSize: screenWidth * 0.042,
                                         fontWeight: FontWeight.w500,
                                         color: Colors.white,
                                         decoration: TextDecoration.none,
@@ -1966,7 +2079,7 @@ class _WorkConditionRatingState extends State<WorkConditionRating> {
                                     child: Text(
                                       "每次搬運/持握持續 > 10秒，搬運距離 > 5公尺",
                                       style: TextStyle(
-                                        fontSize: screenWidth * 0.04,
+                                        fontSize: screenWidth * 0.042,
                                         fontWeight: FontWeight.w500,
                                         color: Colors.white,
                                         decoration: TextDecoration.none,
@@ -2005,13 +2118,11 @@ class _WorkConditionRatingState extends State<WorkConditionRating> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.sizeOf(context).width;
     double screenHeight = MediaQuery.sizeOf(context).height;
     double bottomPadding = MediaQuery.paddingOf(context).bottom;
-
 
     return Container(
       color: Colors.white,
@@ -2037,12 +2148,16 @@ class _WorkConditionRatingState extends State<WorkConditionRating> {
                 icon: Icon(Icons.home_outlined),
                 iconSize: screenWidth * 0.068,
                 color: Colors.black,
-                onPressed: () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => HomePage()),
-                        (Route<dynamic> route) => false,
-                  );
+                onPressed: () async {
+                  await clearGuestKeysForLHC();
+
+                  if (context.mounted) {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => HomePage()),
+                          (Route<dynamic> route) => false,
+                    );
+                  }
                 },
               ),
             ],
@@ -2052,12 +2167,14 @@ class _WorkConditionRatingState extends State<WorkConditionRating> {
             child: Column(
               children: [
                 SizedBox(height: screenHeight * 0.006),
-                ProgressBar(
+                isGuest
+                    ? ProgressBar(
                   currentStep: 5,
                   totalStep: 7,
                   screenWidth: screenWidth,
                   screenHeight: screenHeight,
-                ),
+                )
+                    : SizedBox(height: screenHeight * 0.01),
                 ScoreBar(
                   labelText:
                   "總分 : ${_totalScore.toString().replaceAll(".0", "")} / 13 分",
@@ -2110,14 +2227,69 @@ class _WorkConditionRatingState extends State<WorkConditionRating> {
                         SizedBox(height: screenHeight * 0.02),
                         select6(screenWidth, screenHeight),
                         SizedBox(height: screenHeight * 0.06),
-                        PONButton(
-                          screenWidth: screenWidth,
-                          screenHeight: screenHeight,
-                          havePrevious: false,
-                          haveNextPage: true,
-                          previousText: "",
-                          nextText: "下一步",
-                          nextPage: WorkOrganizationRating(),
+                        SizedBox(
+                          width: screenWidth * 0.36,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              await _saveWorkConditionRatingPoints();
+
+                              if (!isGuest && context.mounted) {
+                                Navigator.pop(context);
+                              } else {
+                                if (context.mounted) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder:
+                                          (context) => WorkOrganizationRating(
+                                        userName: widget.userName,
+                                      ),
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.black,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: screenWidth * 0.036,
+                                vertical: screenHeight * 0.01,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if (isGuest) ...[
+                                  SizedBox(width: screenWidth * 0.036),
+                                  Text(
+                                    "下一步",
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.049,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  SizedBox(width: screenWidth * 0.03),
+                                  Icon(
+                                    Icons.arrow_forward,
+                                    color: Colors.white,
+                                    size: screenWidth * 0.064,
+                                  ),
+                                ] else ...[
+                                  Text(
+                                    "保存",
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.049,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
                         ),
                         SizedBox(height: screenHeight * 0.06 - bottomPadding),
                       ],

@@ -1,44 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:camera/camera.dart';
-import 'package:ncyu_kim/lhc/body_posture_rating/bpr_video_recording.dart';
+import '../../lhc/body_posture_rating/bpr_video_recording.dart';
 import '../user_define_widget/progress_bar.dart';
 import '../user_define_widget/score_bar.dart';
 import '../../main.dart';
 
 class WeightRating extends StatefulWidget {
-  const WeightRating({super.key});
+  final String? userName;
+  const WeightRating({super.key, this.userName});
 
   @override
   State<WeightRating> createState() => _WeightRatingState();
 }
 
-Future<void> _saveLHCWeightRatingPoints(
-  int lhcLoadWeightPoints,
-  String gender,
-  String weight,
-) async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  await prefs.setInt('LoadWeightPoints', lhcLoadWeightPoints);
-  await prefs.setString('Gender', gender);
-  await prefs.setString('Weight', weight);
-}
-
-Future<void> initCameras(BuildContext context) async {
-  final camera = await availableCameras();
-
-  if (context.mounted) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => LHCVideoRecording(camera: camera),
-      ),
-    );
-  }
-}
-
 class _WeightRatingState extends State<WeightRating> {
-  int lhcLoadWeightPoints = 4;
+  late String currentUser;
+  late bool isGuest;
+  int weightRatingPoints = 4;
   String gender = "male";
   String weight = "3～5";
   bool pickMale = true;
@@ -55,6 +34,75 @@ class _WeightRatingState extends State<WeightRating> {
     "36～40",
     "> 40",
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    currentUser = widget.userName ?? "vJ#CA:F3zP)C]A=V";
+
+    if (widget.userName != null && widget.userName != "vJ#CA:F3zP)C]A=V") {
+      isGuest = false;
+    } else {
+      isGuest = true;
+      weightRatingPoints = calculateWeight(gender, weight);
+    }
+
+    _loadWeightRatingPoints();
+  }
+
+  Future<void> _loadWeightRatingPoints() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      gender = prefs.getString('Gender') ?? "male";
+      weight = prefs.getString('Weight') ?? "3～5";
+      weightRatingPoints =
+          prefs.getInt('WeightRatingPoints') ?? calculateWeight(gender, weight);
+    } else {
+      gender = prefs.getString('${currentUser}_Gender') ?? "";
+      weight = prefs.getString('${currentUser}_LHC_Weight') ?? "";
+      weightRatingPoints =
+          prefs.getInt('${currentUser}_LHC_WeightRatingPoints') ??
+              calculateWeight(gender, weight);
+    }
+
+    if (gender == "male") {
+      pickMale = true;
+      pickFemale = false;
+    } else {
+      pickMale = false;
+      pickFemale = true;
+    }
+
+    update();
+  }
+
+  Future<void> _saveWeightRatingPoints() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      await prefs.setString('Gender', gender);
+      await prefs.setString('Weight', weight);
+      await prefs.setInt('WeightRatingPoints', weightRatingPoints);
+    } else {
+      await prefs.setString('${widget.userName}_Gender', gender);
+      await prefs.setString('${widget.userName}_LHC_Weight', weight);
+      await prefs.setInt(
+        '${widget.userName}_LHC_WeightRatingPoints',
+        weightRatingPoints,
+      );
+    }
+  }
+
+  void update() async {
+    setState(() {
+      weightRatingPoints = calculateWeight(gender, weight);
+    });
+
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      _saveWeightRatingPoints();
+    }
+  }
 
   int calculateWeight(String gender, String weight) {
     Map<String, Map<String, int>> weightPoints = {
@@ -81,22 +129,21 @@ class _WeightRatingState extends State<WeightRating> {
         "> 40": 100,
       },
     };
-
     return weightPoints[gender]![weight] ?? 4;
   }
 
-  void update() {
-    setState(() {
-      lhcLoadWeightPoints = calculateWeight(gender, weight);
-    });
-
-    _saveLHCWeightRatingPoints(lhcLoadWeightPoints, gender, weight);
-  }
-
-  @override
-  void initState() {
-    update();
-    super.initState();
+  Future<void> initCameras(BuildContext context) async {
+    final camera = await availableCameras();
+    if (context.mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) =>
+              LHCVideoRecording(userName: currentUser, camera: camera, reRecord: false),
+        ),
+      );
+    }
   }
 
   Widget testingWidget(double screenWidth, double screenHeight) {
@@ -148,16 +195,16 @@ class _WeightRatingState extends State<WeightRating> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                    pickMale
-                        ? const Color(0XFF6F8FA8)
-                        : const Color(0xFFE9E9E9),
+                pickMale
+                    ? const Color(0XFF6F8FA8)
+                    : const Color(0xFFE9E9E9),
                 minimumSize: Size(screenWidth * 0.24, screenHeight * 0.04),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                   side:
-                      pickMale
-                          ? BorderSide(color: Colors.black87, width: 1)
-                          : BorderSide.none,
+                  pickMale
+                      ? const BorderSide(color: Colors.black87, width: 1)
+                      : BorderSide.none,
                 ),
                 elevation: 5,
               ),
@@ -179,16 +226,16 @@ class _WeightRatingState extends State<WeightRating> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                    pickFemale
-                        ? const Color(0XFF6F8FA8)
-                        : const Color(0xFFE9E9E9),
+                pickFemale
+                    ? const Color(0XFF6F8FA8)
+                    : const Color(0xFFE9E9E9),
                 minimumSize: Size(screenWidth * 0.24, screenHeight * 0.04),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                   side:
-                      pickFemale
-                          ? BorderSide(color: Colors.black87, width: 1)
-                          : BorderSide.none,
+                  pickFemale
+                      ? const BorderSide(color: Colors.black87, width: 1)
+                      : BorderSide.none,
                 ),
                 elevation: 5,
               ),
@@ -202,7 +249,6 @@ class _WeightRatingState extends State<WeightRating> {
             ),
           ],
         ),
-
         SizedBox(height: screenHeight * 0.04),
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
@@ -225,108 +271,108 @@ class _WeightRatingState extends State<WeightRating> {
                   context: context,
                   barrierDismissible: true,
                   barrierLabel:
-                      MaterialLocalizations.of(
-                        context,
-                      ).modalBarrierDismissLabel,
+                  MaterialLocalizations.of(
+                    context,
+                  ).modalBarrierDismissLabel,
                   transitionDuration: const Duration(milliseconds: 300),
                   pageBuilder:
                       (context, animation, secondaryAnimation) => Center(
-                        child: Container(
-                          width: screenWidth * 0.85,
-                          height: screenHeight * 0.36,
-                          decoration: BoxDecoration(
-                            color: const Color(0XCC101010),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Column(
-                            children: [
-                              SizedBox(
-                                height: screenHeight * 0.038,
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: screenWidth * 0.69,
-                                      margin: EdgeInsets.only(
-                                        top: screenHeight * 0.008,
-                                        left: screenWidth * 0.03,
-                                      ),
-                                    ),
-                                    Container(
-                                      margin: EdgeInsets.only(
-                                        top: screenHeight * 0.004,
-                                      ),
-                                      child: IconButton(
-                                        icon: Icon(
-                                          Icons.clear,
-                                          color: Colors.white,
-                                          size: screenWidth * 0.06,
-                                        ),
-                                        onPressed: () {
-                                          Navigator.of(context).pop();
-                                        },
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                height: screenHeight * 0.001,
-                                margin: EdgeInsets.only(
-                                  top: screenHeight * 0.01,
-                                  bottom: screenHeight * 0.01,
-                                ),
-                                color: const Color(0XCCEFEFEF),
-                              ),
-                              Center(
-                                child: SizedBox(
-                                  width: screenWidth * 0.75,
-                                  child: Text(
-                                    "檢測過程身體實際承擔的物品重量",
-                                    style: TextStyle(
-                                      fontSize: screenWidth * 0.042,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.white,
-                                      decoration: TextDecoration.none,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Center(
-                                child: SizedBox(
-                                  width: screenWidth * 0.75,
-                                  child: Text(
-                                    "注意:\n1.以「實際承受的重量」計算，不是物品的標示重量\n2.若兩人一同搬運重物，每人約負荷60%重量(為了控制與協調，應假設超過50%)",
-                                    style: TextStyle(
-                                      fontSize: screenWidth * 0.042,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.white,
-                                      decoration: TextDecoration.none,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(
-                                width: screenWidth * 0.75,
-                                child: Text(
-                                  "ex:\n•推車載物總重50公斤，但只需推動力約10\n 公斤 → 實際負重10公斤兩人合力搬運\n 100公斤物品 → 每人實際負重約50公斤",
-                                  style: TextStyle(
-                                    fontSize: screenWidth * 0.038,
-                                    fontWeight: FontWeight.normal,
-                                    color: Colors.white,
-                                    decoration: TextDecoration.none,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                    child: Container(
+                      width: screenWidth * 0.85,
+                      height: screenHeight * 0.36,
+                      decoration: BoxDecoration(
+                        color: const Color(0XCC101010),
+                        borderRadius: BorderRadius.circular(10),
                       ),
+                      child: Column(
+                        children: [
+                          SizedBox(
+                            height: screenHeight * 0.038,
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: screenWidth * 0.69,
+                                  margin: EdgeInsets.only(
+                                    top: screenHeight * 0.008,
+                                    left: screenWidth * 0.03,
+                                  ),
+                                ),
+                                Container(
+                                  margin: EdgeInsets.only(
+                                    top: screenHeight * 0.004,
+                                  ),
+                                  child: IconButton(
+                                    icon: Icon(
+                                      Icons.clear,
+                                      color: Colors.white,
+                                      size: screenWidth * 0.06,
+                                    ),
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            height: screenHeight * 0.001,
+                            margin: EdgeInsets.only(
+                              top: screenHeight * 0.01,
+                              bottom: screenHeight * 0.01,
+                            ),
+                            color: const Color(0XCCEFEFEF),
+                          ),
+                          Center(
+                            child: SizedBox(
+                              width: screenWidth * 0.75,
+                              child: Text(
+                                "檢測過程身體實際承擔的物品重量",
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.042,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white,
+                                  decoration: TextDecoration.none,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Center(
+                            child: SizedBox(
+                              width: screenWidth * 0.75,
+                              child: Text(
+                                "注意:\n1.以「實際承受的重量」計算,不是物品的標示重量\n2.若兩人一同搬運重物,每人約負擔60%重量(為了控制與協調,應假設超過50%)",
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.042,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white,
+                                  decoration: TextDecoration.none,
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: screenWidth * 0.75,
+                            child: Text(
+                              "ex:\n•推車載物總重50公斤,但只需推動力約10\n 公斤 → 實際負重10公斤兩人合力搬運\n 100公斤物品 → 每人實際負重約50公斤",
+                              style: TextStyle(
+                                fontSize: screenWidth * 0.038,
+                                fontWeight: FontWeight.normal,
+                                color: Colors.white,
+                                decoration: TextDecoration.none,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   transitionBuilder: (
-                    context,
-                    animation,
-                    secondaryAnimation,
-                    child,
-                  ) {
+                      context,
+                      animation,
+                      secondaryAnimation,
+                      child,
+                      ) {
                     final curved = CurvedAnimation(
                       parent: animation,
                       curve: Curves.easeOutBack,
@@ -404,8 +450,8 @@ class _WeightRatingState extends State<WeightRating> {
           child: DropdownButton<String>(
             value: weight,
             isExpanded: true,
-            icon: SizedBox(),
-            underline: SizedBox(),
+            icon: const SizedBox(),
+            underline: const SizedBox(),
             borderRadius: BorderRadius.circular(10),
             items:
             weightTexts.map<DropdownMenuItem<String>>((String value) {
@@ -475,9 +521,16 @@ class _WeightRatingState extends State<WeightRating> {
         SizedBox(
           width: screenWidth * 0.36,
           child: ElevatedButton(
-            onPressed: () {
-              _saveLHCWeightRatingPoints(lhcLoadWeightPoints, gender, weight);
-              initCameras(context);
+            onPressed: () async {
+              await _saveWeightRatingPoints();
+
+              if (!isGuest && mounted) {
+                Navigator.pop(context);
+              } else {
+                if (mounted) {
+                  initCameras(context);
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.black,
@@ -488,24 +541,35 @@ class _WeightRatingState extends State<WeightRating> {
               padding: EdgeInsets.symmetric(
                 horizontal: screenWidth * 0.036,
                 vertical: screenHeight * 0.01,
-              ), // 內邊距
+              ),
             ),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                SizedBox(width: screenWidth * 0.036),
-                Text(
-                  "下一步",
-                  style: TextStyle(
-                    fontSize: screenWidth * 0.049,
-                    color: Colors.white,
+                if (isGuest) ...[
+                  SizedBox(width: screenWidth * 0.036),
+                  Text(
+                    "下一步",
+                    style: TextStyle(
+                      fontSize: screenWidth * 0.049,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-                SizedBox(width: screenWidth * 0.03),
-                Icon(
-                  Icons.arrow_forward,
-                  color: Colors.white,
-                  size: screenWidth * 0.064,
-                ),
+                  SizedBox(width: screenWidth * 0.03),
+                  Icon(
+                    Icons.arrow_forward,
+                    color: Colors.white,
+                    size: screenWidth * 0.064,
+                  ),
+                ] else ...[
+                  Text(
+                    "保存",
+                    style: TextStyle(
+                      fontSize: screenWidth * 0.049,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -544,12 +608,16 @@ class _WeightRatingState extends State<WeightRating> {
                 icon: Icon(Icons.home_outlined),
                 iconSize: screenWidth * 0.068,
                 color: Colors.black,
-                onPressed: () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => HomePage()),
-                    (Route<dynamic> route) => false,
-                  );
+                onPressed: () async {
+                  await clearGuestKeysForLHC();
+
+                  if (context.mounted) {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => HomePage()),
+                          (Route<dynamic> route) => false,
+                    );
+                  }
                 },
               ),
             ],
@@ -558,16 +626,18 @@ class _WeightRatingState extends State<WeightRating> {
             color: const Color(0xFFEFEFEF),
             child: Column(
               children: [
-                ProgressBar(
+                isGuest
+                    ? ProgressBar(
                   currentStep: 1,
                   totalStep: 7,
                   screenWidth: screenWidth,
                   screenHeight: screenHeight,
-                ),
+                )
+                    : SizedBox(height: screenHeight * 0.01),
                 ScoreBar(
                   labelText:
-                      "總分 : ${lhcLoadWeightPoints.toString().replaceAll(".0", "")} / 100 分",
-                  currentScore: lhcLoadWeightPoints,
+                  "總分 : ${weightRatingPoints.toString().replaceAll(".0", "")} / 100 分",
+                  currentScore: weightRatingPoints,
                   textSize: screenWidth * 0.038,
                   maxScore: 100,
                   barSize: screenWidth * 0.056,

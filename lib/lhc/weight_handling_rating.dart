@@ -3,7 +3,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
 import '../../user_define_widget/progress_bar.dart';
 import '../../user_define_widget/score_bar.dart';
-import '../user_define_widget/previous_or_next_button.dart';
 import 'work_condition_rating.dart';
 
 List<String> weightHandlingList1 = [
@@ -49,27 +48,28 @@ Widget body(double screenWidth, double screenHeight, String text) {
     child: Container(
       decoration: BoxDecoration(
         image:
-            weightHandlingList1.indexOf(text) == 0
-                ? DecorationImage(
-                  image: AssetImage("assets/images/carry-both.png"),
-                  fit: BoxFit.fitHeight,
-                )
-                : weightHandlingList1.indexOf(text) == 1
-                ? DecorationImage(
-                  image: AssetImage("assets/images/carry-differ.png"),
-                  fit: BoxFit.fitHeight,
-                )
-                : DecorationImage(
-                  image: AssetImage("assets/images/carry-single.png"),
-                  fit: BoxFit.fitHeight,
-                ),
+        weightHandlingList1.indexOf(text) == 0
+            ? DecorationImage(
+          image: AssetImage("assets/images/carry-both.png"),
+          fit: BoxFit.fitHeight,
+        )
+            : weightHandlingList1.indexOf(text) == 1
+            ? DecorationImage(
+          image: AssetImage("assets/images/carry-differ.png"),
+          fit: BoxFit.fitHeight,
+        )
+            : DecorationImage(
+          image: AssetImage("assets/images/carry-single.png"),
+          fit: BoxFit.fitHeight,
+        ),
       ),
     ),
   );
 }
 
 class WeightHandlingRating extends StatefulWidget {
-  const WeightHandlingRating({super.key});
+  final String? userName;
+  const WeightHandlingRating({super.key, this.userName});
 
   @override
   State<WeightHandlingRating> createState() => _WeightHandlingRatingState();
@@ -81,21 +81,87 @@ class _WeightHandlingRatingState extends State<WeightHandlingRating> {
   bool pick1 = true;
   bool pick2 = false;
   bool pick3 = false;
+  late String currentUser;
+  late bool isGuest;
 
-  Future<void> _saveWeightHandlingRatingPoints(int score) async {
+  @override
+  void initState() {
+    super.initState();
+    currentUser = widget.userName ?? "vJ#CA:F3zP)C]A=V";
+
+    if (widget.userName != null && widget.userName != "vJ#CA:F3zP)C]A=V") {
+      isGuest = false;
+    } else {
+      isGuest = true;
+    }
+
+    _loadWeightHandlingRatingPoints();
+  }
+
+  Future<void> _loadWeightHandlingRatingPoints() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setInt("WeightHandlingPoints", _score);
+
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      _text = prefs.getString('WeightHandlingLabel') ?? weightHandlingList1[0];
+      _score =
+          prefs.getInt('WeightHandlingRatingPoints') ??
+              int.parse(weightHandlingList2[0]);
+    } else {
+      _text =
+          prefs.getString('${widget.userName}_LHC_WeightHandlingLabel') ?? "";
+      _score =
+          prefs.getInt('${widget.userName}_LHC_WeightHandlingRatingPoints') ??
+              0;
+    }
+
+    if (_text == weightHandlingList1[0]) {
+      pick1 = true;
+      pick2 = false;
+      pick3 = false;
+    } else if (_text == weightHandlingList1[1]) {
+      pick1 = false;
+      pick2 = true;
+      pick3 = false;
+    } else {
+      pick1 = false;
+      pick2 = false;
+      pick3 = true;
+    }
+
+    update(_text);
+  }
+
+  Future<void> _saveHandlingPoints() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      await prefs.setString('WeightHandlingLabel', _text);
+      await prefs.setInt('WeightHandlingRatingPoints', _score);
+    } else {
+      await prefs.setString(
+        '${widget.userName}_LHC_WeightHandlingLabel',
+        _text,
+      );
+      await prefs.setInt(
+        '${widget.userName}_LHC_WeightHandlingRatingPoints',
+        _score,
+      );
+    }
   }
 
   void update(String value) {
+    int score = int.parse(
+      weightHandlingList2[weightHandlingList1.indexOf(value)],
+    );
+
     setState(() {
-      int score = int.parse(
-        weightHandlingList2[weightHandlingList1.indexOf(value)],
-      );
       _text = value;
       _score = score;
-      _saveWeightHandlingRatingPoints(score);
     });
+
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      _saveHandlingPoints();
+    }
   }
 
   Widget select(double screenWidth, double screenHeight) {
@@ -143,7 +209,7 @@ class _WeightHandlingRatingState extends State<WeightHandlingRating> {
                 left: screenWidth * 0.85,
                 child: IconButton(
                   icon: Image.asset("assets/images/help-circle.png"),
-                  iconSize: screenWidth * 0.058,
+                  iconSize: screenWidth * 0.056,
                   color: Colors.black,
                   onPressed: () {
                     showGeneralDialog(
@@ -207,7 +273,7 @@ class _WeightHandlingRatingState extends State<WeightHandlingRating> {
                                   child: Text(
                                     "雙手承擔相同重量，身體左右平衡",
                                     style: TextStyle(
-                                      fontSize: screenWidth * 0.04,
+                                      fontSize: screenWidth * 0.042,
                                       fontWeight: FontWeight.w500,
                                       color: Colors.white,
                                       decoration: TextDecoration.none,
@@ -360,7 +426,7 @@ class _WeightHandlingRatingState extends State<WeightHandlingRating> {
                                   child: Text(
                                     "短時間內單手承重，或雙手重量明顯不同",
                                     style: TextStyle(
-                                      fontSize: screenWidth * 0.04,
+                                      fontSize: screenWidth * 0.042,
                                       fontWeight: FontWeight.w500,
                                       color: Colors.white,
                                       decoration: TextDecoration.none,
@@ -513,7 +579,7 @@ class _WeightHandlingRatingState extends State<WeightHandlingRating> {
                                   child: Text(
                                     "長時間單手承重，或物品重心難以控制",
                                     style: TextStyle(
-                                      fontSize: screenWidth * 0.04,
+                                      fontSize: screenWidth * 0.042,
                                       fontWeight: FontWeight.w500,
                                       color: Colors.white,
                                       decoration: TextDecoration.none,
@@ -593,12 +659,16 @@ class _WeightHandlingRatingState extends State<WeightHandlingRating> {
                 icon: Icon(Icons.home_outlined),
                 iconSize: screenWidth * 0.068,
                 color: Colors.black,
-                onPressed: () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => HomePage()),
-                    (Route<dynamic> route) => false,
-                  );
+                onPressed: () async {
+                  await clearGuestKeysForLHC();
+
+                  if (context.mounted) {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => HomePage()),
+                          (Route<dynamic> route) => false,
+                    );
+                  }
                 },
               ),
             ],
@@ -608,15 +678,17 @@ class _WeightHandlingRatingState extends State<WeightHandlingRating> {
             child: Column(
               children: [
                 SizedBox(height: screenHeight * 0.006),
-                ProgressBar(
+                isGuest
+                    ? ProgressBar(
                   currentStep: 4,
                   totalStep: 7,
                   screenWidth: screenWidth,
                   screenHeight: screenHeight,
-                ),
+                )
+                    : SizedBox(height: screenHeight * 0.01),
                 ScoreBar(
                   labelText:
-                      "總分 : ${_score.toString().replaceAll(".0", "")} / 4 分",
+                  "總分 : ${_score.toString().replaceAll(".0", "")} / 4 分",
                   currentScore: _score,
                   textSize: screenWidth * 0.038,
                   maxScore: 4,
@@ -634,14 +706,69 @@ class _WeightHandlingRatingState extends State<WeightHandlingRating> {
                     SizedBox(height: screenHeight * 0.05),
                     select(screenWidth, screenHeight),
                     SizedBox(height: screenHeight * 0.05),
-                    PONButton(
-                      screenWidth: screenWidth,
-                      screenHeight: screenHeight,
-                      havePrevious: false,
-                      haveNextPage: true,
-                      previousText: "",
-                      nextText: "下一步",
-                      nextPage: WorkConditionRating(),
+                    SizedBox(
+                      width: screenWidth * 0.36,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          await _saveHandlingPoints();
+
+                          if (!isGuest && context.mounted) {
+                            Navigator.pop(context);
+                          } else {
+                            if (context.mounted) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) => WorkConditionRating(
+                                    userName: widget.userName,
+                                  ),
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: screenWidth * 0.036,
+                            vertical: screenHeight * 0.01,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (isGuest) ...[
+                              SizedBox(width: screenWidth * 0.036),
+                              Text(
+                                "下一步",
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.049,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(width: screenWidth * 0.03),
+                              Icon(
+                                Icons.arrow_forward,
+                                color: Colors.white,
+                                size: screenWidth * 0.064,
+                              ),
+                            ] else ...[
+                              Text(
+                                "保存",
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.049,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
                     ),
                     SizedBox(height: screenHeight * 0.04 - bottomPadding),
                   ],

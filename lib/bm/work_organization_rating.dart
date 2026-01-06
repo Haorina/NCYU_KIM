@@ -2,40 +2,98 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../user_define_widget/progress_bar.dart';
 import '../user_define_widget/score_bar.dart';
-import '../user_define_widget/previous_or_next_button.dart';
 import '../../main.dart';
 import 'result.dart';
 
 class WorkOrganizationRating extends StatefulWidget {
-  const WorkOrganizationRating({super.key, required this.haveTransportation});
-
   final bool haveTransportation;
+  final String? userName;
+
+  const WorkOrganizationRating({
+    super.key,
+    required this.haveTransportation,
+    this.userName,
+  });
 
   @override
   State<WorkOrganizationRating> createState() => _WorkOrganizationRatingState();
 }
 
 class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
+  bool onlyTransportation = false;
   int _score = 0;
+  int totalStep = 7;
+  late String currentUser;
+  late bool isGuest;
 
-  Future<void> _saveWorkConditionRatingPoints() async {
+  @override
+  void initState() {
+    super.initState();
+    currentUser = widget.userName ?? "vJ#CA:F3zP)C]A=V";
+
+    if (widget.userName != null && widget.userName != "vJ#CA:F3zP)C]A=V") {
+      isGuest = false;
+    } else {
+      isGuest = true;
+    }
+
+    _loadWorkOrganizationRatingPoints();
+  }
+
+  Future<void> _loadWorkOrganizationRatingPoints() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('WorkOrganizationRatingPoints', _score);
+
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      onlyTransportation = prefs.getBool('OnlyTransportation') ?? false;
+      _score = prefs.getInt('WorkOrganizationRatingPoints') ?? 0;
+      totalStep = prefs.getInt('TotalStep') ?? 7;
+    } else {
+      onlyTransportation =
+          prefs.getBool('${widget.userName}_BM_OnlyTransportation') ?? false;
+      _score =
+          prefs.getInt('${widget.userName}_BM_WorkOrganizationRatingPoints') ??
+              0;
+      totalStep = prefs.getInt('${widget.userName}_BM_TotalStep') ?? 7;
+    }
+
+    setState(() {});
+    update();
+  }
+
+  Future<void> _saveWorkOrganizationRatingPoints() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      await prefs.setBool('OnlyTransportation', onlyTransportation);
+      await prefs.setInt('WorkOrganizationRatingPoints', _score);
+      await prefs.setInt('TotalStep', totalStep);
+    } else {
+      await prefs.setBool(
+        '${currentUser}_BM_OnlyTransportation',
+        onlyTransportation,
+      );
+      await prefs.setInt(
+        '${currentUser}_BM_WorkOrganizationRatingPoints',
+        _score,
+      );
+      await prefs.setInt('${currentUser}_BM_TotalStep', totalStep);
+    }
   }
 
   void update() {
-    setState(() {
-      _saveWorkConditionRatingPoints();
-    });
+    setState(() {});
+
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      _saveWorkOrganizationRatingPoints();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.sizeOf(context).width;
     double screenHeight = MediaQuery.sizeOf(context).height;
-    double bottomPadding = MediaQuery.paddingOf(context).bottom;
 
-    Widget body(double screenWidth, double screenHeight, double bottomPadding) {
+    Widget body(double screenWidth, double screenHeight) {
       return Expanded(
         child: SingleChildScrollView(
           child: Column(
@@ -76,40 +134,11 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                             ),
                             child: Column(
                               children: [
-                                SizedBox(
-                                  height: screenHeight * 0.038,
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: screenWidth * 0.59,
-                                        margin: EdgeInsets.only(
-                                          top: screenHeight * 0.008,
-                                          left: screenWidth * 0.03,
-                                        ),
-                                      ),
-                                      Container(
-                                        margin: EdgeInsets.only(
-                                          top: screenHeight * 0.004,
-                                        ),
-                                        child: IconButton(
-                                          icon: Icon(
-                                            Icons.clear,
-                                            color: Colors.white,
-                                            size: screenWidth * 0.06,
-                                          ),
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                                SizedBox(height: screenHeight * 0.038),
                                 Container(
                                   height: screenHeight * 0.001,
-                                  margin: EdgeInsets.only(
-                                    top: screenHeight * 0.01,
-                                    bottom: screenHeight * 0.01,
+                                  margin: EdgeInsets.symmetric(
+                                    vertical: screenHeight * 0.01,
                                   ),
                                   color: const Color(0XCCEFEFEF),
                                 ),
@@ -161,7 +190,7 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                   border: Border.all(width: 1, color: Colors.black87),
                   boxShadow: [
                     BoxShadow(
-                      offset: Offset(0, 1),
+                      offset: const Offset(0, 1),
                       blurRadius: 1.0,
                       spreadRadius: 1,
                       color: const Color(0xFF999999),
@@ -169,9 +198,13 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                   ],
                 ),
                 child: Container(
-                  margin: EdgeInsets.only(top: screenHeight * 0.01),
+                  margin: EdgeInsets.symmetric(vertical: screenHeight * 0.005),
                   child: Image.asset(
-                    "assets/images/body_movement_type.png",
+                    _score == 0
+                        ? "assets/images/BMe1.png"
+                        : _score == 2
+                        ? "assets/images/BMe2.png"
+                        : "assets/images/BMe3.png",
                     fit: BoxFit.contain,
                   ),
                 ),
@@ -187,15 +220,12 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                   _score == 0
                       ? const Color(0XFF6F8FA8)
                       : const Color(0xFFE9E9E9),
-                  minimumSize: Size(
-                    screenWidth * 0.6,
-                    screenHeight * 0.056,
-                  ),
+                  minimumSize: Size(screenWidth * 0.6, screenHeight * 0.056),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                     side:
                     _score == 0
-                        ? BorderSide(color: Colors.black87, width: 1)
+                        ? const BorderSide(color: Colors.black87, width: 1)
                         : BorderSide.none,
                   ),
                   elevation: 5,
@@ -219,15 +249,12 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                   _score == 2
                       ? const Color(0XFF6F8FA8)
                       : const Color(0xFFE9E9E9),
-                  minimumSize: Size(
-                    screenWidth * 0.6,
-                    screenHeight * 0.056,
-                  ),
+                  minimumSize: Size(screenWidth * 0.6, screenHeight * 0.056),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                     side:
                     _score == 2
-                        ? BorderSide(color: Colors.black87, width: 1)
+                        ? const BorderSide(color: Colors.black87, width: 1)
                         : BorderSide.none,
                   ),
                   elevation: 5,
@@ -251,15 +278,12 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                   _score == 4
                       ? const Color(0XFF6F8FA8)
                       : const Color(0xFFE9E9E9),
-                  minimumSize: Size(
-                    screenWidth * 0.6,
-                    screenHeight * 0.056,
-                  ),
+                  minimumSize: Size(screenWidth * 0.6, screenHeight * 0.056),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                     side:
                     _score == 4
-                        ? BorderSide(color: Colors.black87, width: 1)
+                        ? const BorderSide(color: Colors.black87, width: 1)
                         : BorderSide.none,
                   ),
                   elevation: 5,
@@ -272,18 +296,73 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                   ),
                 ),
               ),
-              SizedBox(height: screenHeight * 0.1),
-              PONButton(
-                screenWidth: screenWidth,
-                screenHeight: screenHeight,
-                havePrevious: false,
-                haveNextPage: true,
-                previousText: "",
-                nextText: "下一步",
-                nextPage: Result(haveTransportation: widget.haveTransportation),
-                onTap: () => _saveWorkConditionRatingPoints(),
+              SizedBox(height: screenHeight * 0.12),
+              SizedBox(
+                width: screenWidth * 0.36,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    await _saveWorkOrganizationRatingPoints();
+
+                    if (!isGuest && context.mounted) {
+                      Navigator.pop(context);
+                    } else {
+                      if (context.mounted) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => Result(
+                              haveTransportation: widget.haveTransportation,
+                              userName: currentUser,
+                            ),
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: screenWidth * 0.036,
+                      vertical: screenHeight * 0.01,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (isGuest) ...[
+                        SizedBox(width: screenWidth * 0.036),
+                        Text(
+                          "下一步",
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.049,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(width: screenWidth * 0.03),
+                        Icon(
+                          Icons.arrow_forward,
+                          color: Colors.white,
+                          size: screenWidth * 0.064,
+                        ),
+                      ] else ...[
+                        Text(
+                          "保存",
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.049,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ),
-              SizedBox(height: screenHeight * 0.04 - bottomPadding),
+              SizedBox(height: screenHeight * 0.02),
             ],
           ),
         ),
@@ -311,15 +390,18 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
             backgroundColor: Colors.white,
             actions: [
               IconButton(
-                icon: Icon(Icons.home_outlined),
+                icon: const Icon(Icons.home_outlined),
                 iconSize: screenWidth * 0.068,
                 color: Colors.black,
-                onPressed: () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => HomePage()),
-                    (Route<dynamic> route) => false,
-                  );
+                onPressed: () async {
+                  await clearGuestKeysForBM();
+                  if (context.mounted) {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => HomePage()),
+                          (Route<dynamic> route) => false,
+                    );
+                  }
                 },
               ),
             ],
@@ -328,14 +410,22 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
             color: const Color(0xFFEFEFEF),
             child: Column(
               children: [
-                ProgressBar(
-                  currentStep: widget.haveTransportation ? 8 : 6,
-                  totalStep: widget.haveTransportation ? 9 : 7,
+                isGuest
+                    ? ProgressBar(
+                  currentStep:
+                  onlyTransportation
+                      ? 4
+                      : widget.haveTransportation
+                      ? 8
+                      : 6,
+                  totalStep: totalStep,
                   screenWidth: screenWidth,
                   screenHeight: screenHeight,
-                ),
+                )
+                    : SizedBox(height: screenHeight * 0.01),
                 ScoreBar(
-                  labelText: "總分 : ${_score.toString().replaceAll(".0", "")} / 4 分",
+                  labelText:
+                  "總分 : ${_score.toString().replaceAll('.0', '')} / 4 分",
                   currentScore: _score,
                   textSize: screenWidth * 0.038,
                   maxScore: 4,
@@ -344,7 +434,7 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                   screenHeight: screenHeight,
                 ),
                 SizedBox(height: screenHeight * 0.02),
-                body(screenWidth, screenHeight, bottomPadding),
+                body(screenWidth, screenHeight),
               ],
             ),
           ),

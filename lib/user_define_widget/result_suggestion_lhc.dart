@@ -22,20 +22,34 @@ Widget suggestionCard(
       double twistOrLeanPoints,
       double distanceOfBodyCenterPoints,
       double armLiftPoints,
-      double aboveShoulderPoints) {
+      double aboveShoulderPoints,
+      ) {
     // 身體姿勢建議
-    String postureText = bodyPosturePoints >= 13
-        ? '建議：\n目前姿勢屬於高風險姿勢，易導致椎間盤突出、關節退化或肌腱炎等肌肉骨骼損傷。建議立即停止長時間維持此姿勢及大幅降低負重，並使用機械輔助（如升降機）。必要時重新設計作業流程或工作高度，降低對肌肉骨骼系統構成的顯著過載。以下姿勢變換皆屬於高度風險姿勢，若涉及這些姿勢，請立即改善：\n▪️高處搬運 → 蹲姿/跪姿；微彎腰 → 蹲姿/跪姿：這些姿勢對膝關節與腰椎造成極大壓力，建議避免此類姿勢，改用機械輔助完成高處作業，或調整至站立高度；若無法避免，應限制為短暫動作並配戴護具。\n▪️彎腰 → 彎腰：腰椎持續前彎顯著增加椎間盤突出等肌肉骨骼傷害風險。建議改為「蹲下取物再起身」或「寬站姿半蹲」姿勢，並使用腰背支撐帶或高度可調工作台。\n▪️彎腰 → 蹲姿 / 跪姿：腰部和膝部同時受壓，增加肌肉骨骼損傷風險。建議避免直接轉換，可先回到站立再下蹲，並配戴護膝以分散壓力。\n▪️蹲姿/跪姿 → 蹲姿/跪姿：持續極端膝彎曲會增加膝關節炎與積液風險。建議避免長時間維持此姿勢，改採「高跪與站立輪替」，並使用機械輔助及支撐裝置（如護膝、坐凳）來減輕膝蓋的負擔，必要時調整作業高度或位置以便站立操作。'
-        : bodyPosturePoints >= 7
-        ? '目前姿勢對身體已造成中度負擔，可能引發中度肌肉疲勞或初期關節炎症狀（如腰痛或膝蓋不適）。建議縮短單次作業的持續時間，降低負重，並引入人體工學輔具。若操作涉及較大幅度的姿勢變換，應適當調整作業方式以降低腰椎、膝蓋及關節的負擔。以下姿勢變換皆屬於中度風險姿勢，若涉及這些姿勢，請參考改善建議：\n▪️站立 → 彎腰：此姿勢增加腰椎前彎負荷，長時間進行可能誘發椎間盤壓力上升及下背痛。建議使用長柄工具或升降平台，減少頻繁彎腰需求。\n▪️站立 → 蹲姿 / 跪姿：此姿勢對膝蓋和下肢負擔較大，長時間維持可能引起關節傷害或肌肉疲勞。建議改為「寬站立半蹲」並配戴膝關節護具，小休息時應起立伸展，必要時調整作業高度。\n▪️高處搬運 → 彎腰；微彎腰 → 彎腰：此姿勢增加了腰椎壓力，建議調整工作台至腰部高度，改為「肩寬站立微傾」姿勢，減少身體彎曲過度的需求，並使用電動升降台減少上肢抬舉。'
-        : '目前姿勢屬於低風險姿勢，無需重大調整。為預防累積性疲劳，建議避免長時間維持同一姿勢，並每 30–60 分鐘進行動態伸展（如肩頸旋轉、腰部輕微後仰）。同時建議留意有無關節不適，並適度調整姿勢。';
+    String postureText =
+    bodyPosturePoints == 0
+        ? '維持此良好姿勢，直立完成整個搬運過程，但仍需注意搬運重量和頻率，避免過度負荷'
+        : bodyPosturePoints == 3 || bodyPosturePoints == 5
+        ? '建議調整放置物品的位置，使用升降平台、手推車或架子使姿勢能保持直立。若無法避免彎腰或抬舉，每連續搬運20分鐘應進行肩膀、腰部伸展'
+        : bodyPosturePoints == 7
+        ? '重新設計放置位置，提高至腰部以上。若必須放置在低處，應分段放置（先放中間高度，再放到最終位置），或使用機械輔助設備。也可採用兩人協作搬運方式。每搬運10分鐘應進行腰部伸展'
+        : bodyPosturePoints == 9
+        ? '強烈建議改變作業方式，使用升降設備、輸送帶或其他機械化裝置來避免此姿勢。或改為「寬站立半蹲」且必須穿著護膝，每搬運5-10分鐘強制休息片刻'
+        : bodyPosturePoints == 10
+        ? '強烈建議使用升降平台或可調整高度的設備來減少高度差，或分段放置（先放中間高度，再放到最終位置）。也可改為「肩寬站立微傾」且使用輔助設備或兩人協作。每搬運5-10分鐘休息片刻'
+        : bodyPosturePoints == 13
+        ? '必須立即改善起始和結束高度，改⽤機械輔助完成⾼處作業或低處作業，或調整⾄站立⾼度。若無法避免，可先回到站立再下蹲，並配戴護膝。每搬運5-10分鐘休息片刻'
+        : bodyPosturePoints == 15
+        ? '必須使用機械化設備（如升降機、堆高機、輸送帶）輔助。若短期內無法改善，可暫時改為 「蹲下取物再起⾝」或「寬站姿半蹲」姿勢。並配備防護用具'
+        : bodyPosturePoints == 18
+        ? '必須使用機械化設備（如升降機、堆高機、輸送帶）輔助。若緊急情況下必須執行，應使用分段完成高度變化或可先回到站立再下蹲，並配備防護用具。'
+        : '必須使用機械化或自動化設備來替代人工搬運。若因特殊原因必須緊急執行，可改採「⾼跪與跪姿輪替」並使⽤機械輔助及⽀撐裝置（如護膝、 坐凳）。';
 
     // 額外加分項建議
     List<String> additionalSuggestions = [];
 
     additionalSuggestions.add(
       twistOrLeanPoints > 0
-          ? '▪️軀幹扭轉或側傾：建議先轉身面向目標方向，避免軀幹扭轉或側傾。在搬運過程中，保持肩膀與骨盆在同一方向，透過調整腳步而非軀幹扭轉來改變方向。'
+          ? '▪️軀幹扭轉或側傾：先轉身面向目標方向，避免軀幹扭轉或側傾。在搬運過程中，保持肩膀與骨盆在同一方向，透過調整腳步而非軀幹扭轉來改變方向。'
           : '',
     );
     additionalSuggestions.add(
@@ -62,7 +76,6 @@ Widget suggestionCard(
     return '$postureText${additionalText.isNotEmpty ? '\n\n額外加分項建議：\n$additionalText' : ''}';
   }
 
-
   if (index == 0) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,6 +98,7 @@ Widget suggestionCard(
               fontSize: screenWidth * 0.038,
               fontWeight: FontWeight.w500,
               color: const Color(0xFF33773F),
+              height: screenHeight * 0.0005,
             ),
           ),
         ),
@@ -128,6 +142,7 @@ Widget suggestionCard(
               fontSize: screenWidth * 0.038,
               fontWeight: FontWeight.w500,
               color: const Color(0xFF33773F),
+              height: screenHeight * 0.0005,
             ),
           ),
         ),
@@ -135,12 +150,12 @@ Widget suggestionCard(
           margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.036),
           child: Text(
             loadWeightPoints > 25
-                ? '建議：此負重超過大多數人的安全搬運範圍。強烈建議減少負重至少一半，並避免單人搬運。應依賴兩人協作搬運，並使用輔助設備來完成搬運，或將重物分成多次搬運，這樣能有效降低搬運過程中的風險。'
+                ? '此負重超過安全搬運範圍。強烈建議減少負重至少⼀半或應依賴兩人協作搬運，並使用輔助設備來完成搬運，或將重物分成多次搬運'
                 : loadWeightPoints > 15
-                ? '建議：此負重長時間搬運會造成較大的肌肉和關節的負擔。負重建議減少 10-15 公斤，或將重物分成多次搬運。若無法分次搬運，應由兩人協作搬運。搬運過程可使用輔助工具來減輕工作強度，從而減少肌肉和關節的負擔。'
+                ? '此負重會造成較⼤的肌⾁和關節的負擔。負重建議減少10-15公⽄，或將重物分成多次搬運或使⽤輔助工具來減輕⼯作強度'
                 : loadWeightPoints > 6
-                ? '建議：減少負重 5-10 公斤，或將重物分成多次搬運，避免一次負重過大。若無法分次搬運，應考慮兩人協作搬運，減少每個人的負擔，從而降低對肌肉和關節的傷害風險。'
-                : '建議：此負重評級較低，對大多數工作者來說，單次搬運不會造成過大風險。但仍需注意搬運方式，避免不良姿勢造成過度負擔，保持正確的搬運姿勢以減少潛在風險。',
+                ? '建議減少負重 5-10 公⽄，或將重物分成多次搬運。若無法分次搬運，應考慮兩人協作搬運'
+                : '此評級較低，少次搬運不會造成嚴重傷害。但仍需注意搬運方式，避免不良姿勢造成過度負擔',
             style: TextStyle(
               fontSize: screenWidth * 0.038,
               color: const Color(0xFF544D4D),
@@ -171,6 +186,7 @@ Widget suggestionCard(
               fontSize: screenWidth * 0.038,
               fontWeight: FontWeight.w500,
               color: const Color(0xFF33773F),
+              height: screenHeight * 0.0005,
             ),
           ),
         ),
@@ -178,10 +194,10 @@ Widget suggestionCard(
           margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.036),
           child: Text(
             weightHandlingPoints == 0
-                ? '建議：雙手對稱負重是最理想的搬運姿勢，維持現有工作方式，無需額外調整。'
+                ? '維持雙手對稱負重的搬運姿勢，無需額外調整'
                 : (weightHandlingPoints == 2
-                ? '建議：單手或不對稱負重會加大對一側肌肉和關節的傷害，建議盡量避免長時間單手或不對稱搬運，若必須使用單手搬運，應考慮使用其他輔助工具來平衡負重。'
-                : '建議：負重的壓力集中在單一手臂時，對肌肉和關節的負擔會非常大，容易引發損傷。強烈建議改為雙手對稱負重搬運，或使用輔助工具來平衡負重，減少單側負擔。如果無法改變搬運方式，應考慮減少每次搬運的重量，並適當的休息'),
+                ? '會造成⼀側肌肉和關節的傷害，建議盡量避免長時間單手或不對稱搬運，或考慮使用其他輔助工具來平衡負重'
+                : '強烈建議改為雙⼿對稱負重搬運，或使用輔助⼯具來平衡重量，減少單側負擔'),
             style: TextStyle(
               fontSize: screenWidth * 0.038,
               color: const Color(0xFF544D4D),
@@ -198,7 +214,8 @@ Widget suggestionCard(
           return const CircularProgressIndicator();
         }
         final prefs = snapshot.data!;
-        final int score1 = prefs.getInt("WorkConditionScore1") ?? 0; // 手/手臂關節是否已到極限
+        final int score1 =
+            prefs.getInt("WorkConditionScore1") ?? 0; // 手/手臂關節是否已到極限
         final int score2 = prefs.getInt("WorkConditionScore2") ?? 0; // 重物是否不易抓握
         final int score3 = prefs.getInt("WorkConditionScore3") ?? 0; // 不良氣候條件
         final int score4 = prefs.getInt("WorkConditionScore4") ?? 0; // 空間條件
@@ -206,12 +223,28 @@ Widget suggestionCard(
         final int score6 = prefs.getInt("WorkConditionScore6") ?? 0; // 握持/搬運情況
 
         List<String> conditionSuggestions = [
-          '手/手臂關節是否已到極限: ${score1 == 0 ? "手/手臂關節幾乎不會到極限，可維持現有作業方式，並定期檢查手部姿勢，確保不造成過度負荷。" : score1 == 1 ? "手/手臂關節偶爾到達極限，應適時休息並搭配伸展運動以減少關節壓力。亦可考慮調整工具或作業方式，減少關節活動範圍的極限使用。" : "手/手臂關節經常處於極限狀態，應重新設計作業流程並引入輔助設備以降低負擔。需增加休息間隔，並進行適當的關節放鬆與伸展。"}',
-          '重物是否不易抓握/需更大的持握力量: ${score2 == 0 ? "重物可輕鬆抓握，建議保持雙手對稱搬運，並使用符合人體工學的工具以減少手部負擔。" : score2 == 1 ? "重物稍微難以抓握時，應選擇帶有適合手柄的工具，並可佩戴防滑手套來增強抓握的穩定，以減少握持所需的力量。" : "當重物抓握困難且需過度用力時，應更換易於抓握的重物設計，或使用輔助工具。避免長時間持續用力，並安排適當的休息。"}',
-          '有無不良的氣候條件: ${score3 == 0 ? "工作環境氣候條件良好，維持現有工作環境，並保持適當通風與舒適度。" : "若工作環境過熱或過冷，應配置適當防護裝備，如散熱服或防寒衣，改善通風或溫控系統，並規劃適當的休息時間。"}',
-          '空間條件: ${score4 == 0 ? "工作空間條件良好，建議維持現有工作區域，並定期檢查安全性。" : score4 == 1 ? "工作空間受限時，應優化作業動線，確保有足夠活動範圍，避免長時間處於受限姿勢。若地面環境不佳，應盡快修繕或清理。" : "工作空間不足或高度受限，應重新設計工作區域，增加活動空間，並使用可調高度或輔助設備以改善姿勢。若地面環境不佳，應立即修繕或清理，確保地面平整與安全。"}',
-          '有無額外的衣物或裝備: ${score5 == 0 ? "衣著無額外負擔，建議持續使用舒適、不妨礙活動的工作服。" : "若需穿戴額外防護裝備，建議選擇輕便、透氣材質，以減少重量與熱負擔，並確保活動靈活度。"}',
-          '握持/搬運情況: ${score6 == 0 ? "握持/搬運情況正常，可維持現有搬運方式，並定期檢查姿勢與作業流程，確保不造成累積性負擔。" : score6 == 2 ? "當搬運/持握時間偏長（5–10 秒），搬運距離較遠（2–5 公尺）時，應分次搬運或縮短單次搬運距離。必要時兩人協作搬運，並使用輔助工具，以降低疲勞與關節壓力。" : "搬運/持握時間過長（>10 秒），且搬運距離超過 5 公尺，屬於高風險情況。強烈建議避免單人搬運，應使用機械或輔助設備完成，並將重物分批搬運。必要時重新設計作業流程，降低單次搬運的時間與距離，以避免長期過度負荷導致肌肉骨骼損傷。"}',
+          '【手/手臂關節是否已到極限】 ${score1 == 0
+              ? "可維持現有作業方式，並定期檢查手部姿勢，確保不造成過度負荷"
+              : score1 == 1
+              ? "應適時休息並搭配伸展運動以減少關節壓⼒。亦可考慮調整⼯具或作業⽅式，減少關節活動範圍的極限使⽤"
+              : "應重新設計作業流程並引入輔助設備以降低負 擔。需增加休息間隔，並進⾏適當的關節放鬆與伸展"}',
+          '【重物是否不易抓握/需更大的持握力量】${score2 == 0
+              ? "重物可輕鬆抓握，建議維持此方式"
+              : score2 == 1
+              ? "應選擇帶有適合⼿柄的⼯具，並可佩戴防滑⼿套來增強抓握的穩定，以減少握持所需的⼒量"
+              : "當重物抓握困難且需過度⽤⼒時，應更換易於抓握的重物設計，或使⽤輔助⼯具。避免長時間持續⽤⼒"}',
+          '【有無不良的氣候條件】 ${score3 == 0 ? "維持現有⼯作環境，保持適當通風與舒適度" : "若⼯作環境過熱或過冷，應配置適當防護裝備，如散熱服或防寒衣，改善通風或溫控系統 "}',
+          '【空間條件】 ${score4 == 0
+              ? "維持現有工作區域，並定期檢查安全性。"
+              : score4 == 1
+              ? "應優化作業動線，確保有⾜夠活動範圍。若地⾯環境不佳，應盡快修繕或清理"
+              : "應重新設計⼯作區域，增加活動空間，並使⽤可調⾼度或輔助設備以改善姿勢。若地⾯地板骯髒、不平整或粗糙地面應立即修繕或清理"}',
+          '【有無額外的衣物或裝備 】${score5 == 0 ? "持續使用舒適、不妨礙活動的衣物及裝備。" : "若需穿戴額外防護裝備，建議選擇輕便、透氣材質，以減少重量與熱負擔，並確保活動靈活度。"}',
+          '【握持/搬運情況】 ${score6 == 0
+              ? "可維持現有搬運方式，並定期檢查姿勢與作業流程，確保不造成累積性負擔。"
+              : score6 == 2
+              ? "應分次搬運或縮短單次搬運距離。必要時兩人協作搬運，並使用輔助工具，以降低疲勞與關節壓力。"
+              : "強烈建議避免單⼈搬運，應使⽤機械或輔助設備完成，並將重物分批搬運，且降低單次搬運的時間與距離"}',
         ];
 
         return Column(
@@ -235,6 +268,7 @@ Widget suggestionCard(
                   fontSize: screenWidth * 0.038,
                   fontWeight: FontWeight.w500,
                   color: const Color(0xFF33773F),
+                  height: screenHeight * 0.0005,
                 ),
               ),
             ),
@@ -274,6 +308,7 @@ Widget suggestionCard(
               fontSize: screenWidth * 0.038,
               fontWeight: FontWeight.w500,
               color: const Color(0xFF33773F),
+              height: screenHeight * 0.0005,
             ),
           ),
         ),
@@ -281,10 +316,10 @@ Widget suggestionCard(
           margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.036),
           child: Text(
             timeRatingPoints == 0.0
-                ? '建議：目前工作負荷分配均衡，包含多種工作型態，能有效避免長時間集中進行高強度作業。建議持續保持現有的工作安排，並定期檢視工作內容，確保無過度集中負荷的情況。'
+                ? '持續保持現有的工作安排，並定期檢視工作內容，確保無過度集中負荷的情況。'
                 : (timeRatingPoints == 2.0
-                ? '建議：工作負荷變化有限，偶爾在一天內集中進行單一高強度工作，可能增加肌肉骨骼傷害的風險。建議調整工作流程，將高強度作業分散至不同時間段，並在工作中穿插低負荷或不同性質的工作，讓肌肉與關節有充分休息。'
-                : '建議：工作長時間集中於單一高強度負荷，且經常達到負荷峰值，容易導致肌肉骨骼傷害。強烈建議重新設計工作排程，將高強度工作分散至多日或多時段進行。建議使用輔助工具，或引入輪班制度，並確保員工有充足的休息時間，從而減少長時間承受高強度負荷的風險。'),
+                ? '調整工作流程，將高強度作業分散至不同時間段，並在工作中穿插低負荷或不同性質的工作，讓肌肉與關節有充分休息。'
+                : '強烈建議重新設計工作排程，將高強度工作分散至多日或多時段進行。建議使用輔助工具，或引入輪班制度，並確保員工有充足的休息時間，從而減少長時間承受高強度負荷的風險。'),
             style: TextStyle(
               fontSize: screenWidth * 0.038,
               color: const Color(0xFF544D4D),
@@ -315,6 +350,7 @@ Widget suggestionCard(
               fontSize: screenWidth * 0.038,
               fontWeight: FontWeight.w500,
               color: const Color(0xFF33773F),
+              height: screenHeight * 0.0005,
             ),
           ),
         ),
@@ -322,12 +358,12 @@ Widget suggestionCard(
           margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.036),
           child: Text(
             totalScore >= 100.0
-                ? '生理過載極有可能發生，健康風險顯著。容易出現明確的異常(如劇烈疼痛)、明顯功能障礙（如行動受限），甚至導致身體結構性損傷（如肌肉、韌帶或關節變形），此屬不可忽視的病態表現。'
+                ? '生理過載極可能發生，會產生明確的健康傷害。強烈建議立即進行全面性的工作再設計，並進行健康監測追蹤。若短期內無法改善工作條件，應考慮暫停此類作業直到完成改善措施為止'
                 : (totalScore >= 50.0
-                ? '對一般族群已有生理過載的可能性。可能出現異常反應（如肌肉酸痛、關節不適），甚至造成暫時性的功能障礙（如行動受限），大多數情況下屬可逆狀態，無明顯結構性損傷。但若長期忽視，可能進一步演變為職業性肌肉骨骼疾病。'
+                ? '對一般族群有生理過載可能性。建議重新設計工作流程和環境，減少不良姿勢的持續時間和頻率'
                 : (totalScore >= 20.0
-                ? '對恢復能力較弱者（如年長者、已有慢性疾病或疲勞者）可能出現生理過載。可能導致輕度疲勞或低度適應不良（如動作效率下降、注意力不集中），但一般可透過充分休息或短暫調整恢復。'
-                : '生理過載的可能性極低，通常不會對健康造成影響。')),
+                ? '對恢復能力較弱者（如年長者、有舊傷者）有生理過載可能性。建議針對這些族群提供更多的休息時間和姿勢變換機會'
+                : '生理過載可能性低。偶爾維持此類姿勢不會造成嚴重傷害。但仍需注意避免累積性負擔')),
             style: TextStyle(
               fontSize: screenWidth * 0.038,
               color: const Color(0xFF544D4D),
@@ -358,6 +394,7 @@ Widget suggestionCard(
               fontSize: screenWidth * 0.038,
               fontWeight: FontWeight.w500,
               color: const Color(0xFF4B3003),
+              height: screenHeight * 0.0005,
             ),
           ),
         ),
@@ -382,92 +419,152 @@ Widget suggestionCard(
   }
 }
 
-
-class ResultSuggestion extends StatefulWidget {
-  const ResultSuggestion({
+class ResultSuggestionLHC extends StatefulWidget {
+  const ResultSuggestionLHC({
     super.key,
+    this.userName,
     required this.suggestionName,
     required this.totalScore,
     required this.screenWidth,
     required this.screenHeight,
+    this.topRiskIndices = const [0, 1, 2],
   });
 
-
+  final String? userName;
   final List<String> suggestionName;
   final num totalScore;
   final double screenWidth;
   final double screenHeight;
-
+  final List<int> topRiskIndices;
 
   @override
-  State<ResultSuggestion> createState() => _ResultSuggestionState();
+  State<ResultSuggestionLHC> createState() => _ResultSuggestionLHCState();
 }
 
-
-class _ResultSuggestionState extends State<ResultSuggestion> {
-  int loadWeightPoints = 0;
+class _ResultSuggestionLHCState extends State<ResultSuggestionLHC> {
+  int weightRatingPoints = 0;
   double totalBodyPosturePoints = 0;
   double bodyPosturePoints = 0;
   double timeRatingPoints = 0;
-  int weightHandlingPoints = 0;
-  int workConditionPoints = 0;
-  int workOrganizationPoints = 0;
+  int weightHandlingRatingPoints = 0;
+  int workConditionRatingPoints = 0;
+  int workOrganizationRatingPoints = 0;
   double twistOrLeanPoints = 0;
   double distanceOfBodyCenterPoints = 0;
   double armLiftPoints = 0;
   double aboveShoulderPoints = 0;
   double totalScore = 0;
-  bool isSaved = false;
-  List<num> maxScore = [0, 0, 0];
-  List<String> maxScoreText = ["3", "2", "1"];
-
+  bool isLoading = true;
+  List<int> topRiskIndices = [];
+  late String currentUser;
+  late bool isGuest;
 
   Future<void> _loadPoints() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
+    setState(() {
+      if(isGuest) {
+        weightRatingPoints = prefs.getInt("WeightRatingPoints") ?? 4;
+        totalBodyPosturePoints = prefs.getDouble("TotalBodyPosturePoints") ?? 0;
+        bodyPosturePoints = prefs.getDouble("BodyPosturePoints") ?? 0;
+        timeRatingPoints = prefs.getDouble("TimeRatingPoints") ?? 1;
+        weightHandlingRatingPoints =
+            prefs.getInt("WeightHandlingRatingPoints") ?? 0;
+        workConditionRatingPoints =
+            prefs.getInt("WorkConditionRatingPoints") ?? 0;
+        workOrganizationRatingPoints =
+            prefs.getInt("WorkOrganizationRatingPoints") ?? 0;
+        twistOrLeanPoints = prefs.getDouble("TwistOrLeanPoints") ?? 0;
+        distanceOfBodyCenterPoints =
+            prefs.getDouble("DistanceOfBodyCenterPoints") ?? 0;
+        armLiftPoints = prefs.getDouble("ArmLiftPoints") ?? 0;
+        aboveShoulderPoints = prefs.getDouble("AboveShoulderPoints") ?? 0;
+      }
+      else {
+        weightRatingPoints = prefs.getInt("${currentUser}_LHC_WeightRatingPoints") ?? 4;
+        totalBodyPosturePoints = prefs.getDouble("${currentUser}_LHC_TotalBodyPosturePoints") ?? 0;
+        bodyPosturePoints = prefs.getDouble("${currentUser}_LHC_BodyPosturePoints") ?? 0;
+        timeRatingPoints = prefs.getDouble("${currentUser}_LHC_TimeRatingPoints") ?? 1;
+        weightHandlingRatingPoints =
+            prefs.getInt("${currentUser}_LHC_WeightHandlingRatingPoints") ?? 0;
+        workConditionRatingPoints =
+            prefs.getInt("${currentUser}_LHC_WorkConditionRatingPoints") ?? 0;
+        workOrganizationRatingPoints =
+            prefs.getInt("${currentUser}_LHC_WorkOrganizationRatingPoints") ?? 0;
+        twistOrLeanPoints = prefs.getDouble("${currentUser}_LHC_TwistOrLeanPoints") ?? 0;
+        distanceOfBodyCenterPoints =
+            prefs.getDouble("${currentUser}_LHC_DistanceOfBodyCenterPoints") ?? 0;
+        armLiftPoints = prefs.getDouble("${currentUser}_LHC_ArmLiftPoints") ?? 0;
+        aboveShoulderPoints = prefs.getDouble("${currentUser}_LHC_AboveShoulderPoints") ?? 0;
+      }
+
+      totalScore =
+          timeRatingPoints *
+              (weightRatingPoints +
+                  totalBodyPosturePoints +
+                  weightHandlingRatingPoints +
+                  workConditionRatingPoints +
+                  workOrganizationRatingPoints);
+    });
+
+    // 🟢 各項評級分數整理與排序
+    List<Map<String, dynamic>> riskItems = [
+      {'index': 0, 'name': '身體姿勢', 'score': totalBodyPosturePoints},
+      {'index': 1, 'name': '負重評級', 'score': weightRatingPoints.toDouble()},
+      {'index': 2, 'name': '負荷處理條件', 'score': weightHandlingRatingPoints.toDouble()},
+      {'index': 3, 'name': '不良工作條件', 'score': workConditionRatingPoints.toDouble()},
+      {
+        'index': 4,
+        'name': '工作時間分配',
+        'score': workOrganizationRatingPoints.toDouble(),
+      },
+    ];
+    // 排序（由高到低）
+    riskItems.sort(
+          (a, b) => (b['score'] as double).compareTo(a['score'] as double),
+    );
+    int nonZeroCount =
+        riskItems.where((item) => (item['score'] as double) > 0.0).length;
 
     setState(() {
-      loadWeightPoints = prefs.getInt("LoadWeightPoints") ?? 4;
-      totalBodyPosturePoints = prefs.getDouble("TotalBodyPosturePoints") ?? 0;
-      bodyPosturePoints = prefs.getDouble("BodyPosturePoints") ?? 0;
-      timeRatingPoints = prefs.getDouble("TimeRatingPoints") ?? 1;
-      weightHandlingPoints = prefs.getInt("WeightHandlingPoints") ?? 0;
-      workConditionPoints = prefs.getInt("WorkConditionPoints") ?? 0;
-      workOrganizationPoints = prefs.getInt("WorkOrganizationPoints") ?? 0;
-      twistOrLeanPoints = prefs.getDouble("TwistOrLeanPoints") ?? 0;
-      distanceOfBodyCenterPoints = prefs.getDouble("DistanceOfBodyCenterPoints") ?? 0;
-      armLiftPoints = prefs.getDouble("ArmLiftPoints") ?? 0;
-      aboveShoulderPoints = prefs.getDouble("AboveShoulderPoints") ?? 0;
-      totalScore = timeRatingPoints *
-          (loadWeightPoints +
-              totalBodyPosturePoints +
-              weightHandlingPoints +
-              workConditionPoints +
-              workOrganizationPoints);
-      List<MapEntry<String, num>> scoreEntries = [
-        MapEntry("負重評級", loadWeightPoints),
-        MapEntry("身體姿勢", totalBodyPosturePoints),
-        MapEntry("負荷處理條件", weightHandlingPoints),
-        MapEntry("不良工作條件", workConditionPoints),
-        MapEntry("工作時間分配", workOrganizationPoints),
-      ];
+      topRiskIndices =
+          riskItems
+              .take(nonZeroCount)
+              .map((item) => item['index'] as int)
+              .toList();
 
+      if(topRiskIndices.length > 3) {
+        topRiskIndices =
+            riskItems
+                .take(3)
+                .map((item) => item['index'] as int)
+                .toList();
+      }
 
-      maxScore = scoreEntries.take(5).map((entry) => entry.value).toList();
-      maxScoreText = scoreEntries.take(5).map((entry) => entry.key).toList();
+      isLoading = false;
     });
   }
-
 
   @override
   void initState() {
     super.initState();
+    currentUser = widget.userName ?? "vJ#CA:F3zP)C]A=V";
+
+    if (widget.userName != null && widget.userName != "vJ#CA:F3zP)C]A=V") {
+      isGuest = false;
+    } else {
+      isGuest = true;
+    }
+
     _loadPoints();
   }
 
-
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -483,7 +580,6 @@ class _ResultSuggestionState extends State<ResultSuggestion> {
         ],
       ),
       width: widget.screenWidth * 0.9,
-      // 移除固定高度，讓容器根據內容自適應
       child: Column(
         children: [
           Container(
@@ -507,7 +603,9 @@ class _ResultSuggestionState extends State<ResultSuggestion> {
             margin: EdgeInsets.only(bottom: widget.screenHeight * 0.01),
             decoration: const BoxDecoration(color: Color(0xFFC2C2C2)),
           ),
-          for (int i = 0; i < 7; i++) ...[
+
+          //改成前三高 + 健康疑慮 + 採取措施
+          for (int i in [...topRiskIndices, 5, 6]) ...[
             Align(
               alignment: Alignment.centerLeft,
               child: suggestionCard(
@@ -516,10 +614,10 @@ class _ResultSuggestionState extends State<ResultSuggestion> {
                 widget.suggestionName,
                 totalScore,
                 i,
-                loadWeightPoints,
-                weightHandlingPoints,
+                weightRatingPoints,
+                weightHandlingRatingPoints,
                 timeRatingPoints,
-                workConditionPoints,
+                workConditionRatingPoints,
                 twistOrLeanPoints,
                 distanceOfBodyCenterPoints,
                 bodyPosturePoints,
@@ -534,4 +632,3 @@ class _ResultSuggestionState extends State<ResultSuggestion> {
     );
   }
 }
-

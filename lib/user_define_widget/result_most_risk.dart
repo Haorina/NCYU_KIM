@@ -19,6 +19,8 @@ class ResultMostRisk extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    int nonZeroCount = mostRiskScore.where((score) => score != 0.0).length;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -34,7 +36,7 @@ class ResultMostRisk extends StatelessWidget {
         ],
       ),
       width: screenWidth * 0.9,
-      height: screenHeight * 0.3,
+      height: nonZeroCount == 3 ? screenHeight * 0.3 : nonZeroCount == 2 ? screenHeight * 0.23 : screenHeight * 0.15,
       child: Column(
         children: [
           Container(
@@ -58,7 +60,7 @@ class ResultMostRisk extends StatelessWidget {
             margin: EdgeInsets.only(bottom: screenHeight * 0.01),
             decoration: BoxDecoration(color: const Color(0xFFC2C2C2)),
           ),
-          for (int i = 0; i < 3; i++) ...[
+          for (int i = 0; i < nonZeroCount; i++) ...[
             SizedBox(
               child: Column(
                 children: [
@@ -67,7 +69,7 @@ class ResultMostRisk extends StatelessWidget {
                     margin: EdgeInsets.only(left: screenWidth * 0.04),
                     child: Text(
                       totalScore != 0
-                          ? "${mostRiskText[i]} ${(mostRiskScore[i] / totalScore * 100).toInt()}%"
+                          ? "${mostRiskText[i]} ${(mostRiskScore[i] / totalScore * 100).round()}%"
                           : "${mostRiskText[i]} ${0}%",
                       style: TextStyle(
                         fontSize: screenWidth * 0.038,
@@ -84,11 +86,11 @@ class ResultMostRisk extends StatelessWidget {
                     scoreBarWidth: 0.85,
                     backgroundColor: const Color(0xFFD9D9D9),
                     valueColor:
-                        i == 0
-                            ? const Color(0xFFF10000)
-                            : i == 1
-                            ? const Color(0xFFFF753E)
-                            : const Color(0xFFFFD500),
+                    i == 0
+                        ? const Color(0xFFF10000)
+                        : i == 1
+                        ? const Color(0xFFFF753E)
+                        : const Color(0xFFFFD500),
 
                     screenWidth: screenWidth,
                     screenHeight: screenHeight,

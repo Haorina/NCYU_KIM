@@ -3,13 +3,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
 import '../../user_define_widget/progress_bar.dart';
 import '../../user_define_widget/score_bar.dart';
-import '../user_define_widget/previous_or_next_button.dart';
 import 'back_load_rating.dart';
 
 List<String> timeList = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"];
 
 class ABPTimeRating extends StatefulWidget {
-  const ABPTimeRating({super.key});
+  final String? userName;
+
+  const ABPTimeRating({super.key, this.userName});
 
   @override
   State<ABPTimeRating> createState() => _ABPTimeRatingState();
@@ -37,86 +38,86 @@ Widget title(BuildContext context, double screenWidth, double screenHeight) {
             context: context,
             barrierDismissible: true,
             barrierLabel:
-                MaterialLocalizations.of(context).modalBarrierDismissLabel,
+            MaterialLocalizations.of(context).modalBarrierDismissLabel,
             transitionDuration: const Duration(milliseconds: 300),
             pageBuilder:
                 (context, animation, secondaryAnimation) => Center(
-                  child: Container(
-                    width: screenWidth * 0.85,
-                    height: screenHeight * 0.18,
-                    decoration: BoxDecoration(
-                      color: const Color(0XCC101010),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          height: screenHeight * 0.038,
-                          child: Row(
-                            children: [
-                              Container(
-                                width: screenWidth * 0.69,
-                                margin: EdgeInsets.only(
-                                  top: screenHeight * 0.008,
-                                  left: screenWidth * 0.03,
-                                ),
-                              ),
-                              Container(
-                                margin: EdgeInsets.only(
-                                  top: screenHeight * 0.004,
-                                ),
-                                child: IconButton(
-                                  icon: Icon(
-                                    Icons.clear,
-                                    color: Colors.white,
-                                    size: screenWidth * 0.06,
-                                  ),
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          height: screenHeight * 0.001,
-                          margin: EdgeInsets.only(
-                            top: screenHeight * 0.01,
-                            bottom: screenHeight * 0.01,
-                          ),
-                          color: const Color(0XCCEFEFEF),
-                        ),
-                        Center(
-                          child: SizedBox(
-                            width: screenWidth * 0.75,
-                            child: Text(
-                              "每天從事本項作業共...分鐘",
-                              style: TextStyle(
-                                fontSize: screenWidth * 0.042,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white,
-                                decoration: TextDecoration.none,
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          width: screenWidth * 0.75,
-                          child: Text(
-                            "ex:\n•每天早上搬運2小時，下午3小時:300(分\n 鐘)",
-                            style: TextStyle(
-                              fontSize: screenWidth * 0.038,
-                              fontWeight: FontWeight.normal,
-                              color: Colors.white,
-                              decoration: TextDecoration.none,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+              child: Container(
+                width: screenWidth * 0.85,
+                height: screenHeight * 0.18,
+                decoration: BoxDecoration(
+                  color: const Color(0XCC101010),
+                  borderRadius: BorderRadius.circular(10),
                 ),
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: screenHeight * 0.038,
+                      child: Row(
+                        children: [
+                          Container(
+                            width: screenWidth * 0.69,
+                            margin: EdgeInsets.only(
+                              top: screenHeight * 0.008,
+                              left: screenWidth * 0.03,
+                            ),
+                          ),
+                          Container(
+                            margin: EdgeInsets.only(
+                              top: screenHeight * 0.004,
+                            ),
+                            child: IconButton(
+                              icon: Icon(
+                                Icons.clear,
+                                color: Colors.white,
+                                size: screenWidth * 0.06,
+                              ),
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      height: screenHeight * 0.001,
+                      margin: EdgeInsets.only(
+                        top: screenHeight * 0.01,
+                        bottom: screenHeight * 0.01,
+                      ),
+                      color: const Color(0XCCEFEFEF),
+                    ),
+                    Center(
+                      child: SizedBox(
+                        width: screenWidth * 0.75,
+                        child: Text(
+                          "每天從事本項作業共...分鐘",
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.042,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                            decoration: TextDecoration.none,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: screenWidth * 0.75,
+                      child: Text(
+                        "ex:\n•每天早上搬運2小時，下午3小時:300(分\n 鐘)",
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.038,
+                          fontWeight: FontWeight.normal,
+                          color: Colors.white,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             transitionBuilder: (context, animation, secondaryAnimation, child) {
               final curved = CurvedAnimation(
                 parent: animation,
@@ -165,11 +166,53 @@ Widget body(double screenWidth, double screenHeight, String times) {
 class _ABPTimeRatingState extends State<ABPTimeRating> {
   String _times = timeList[0];
   double _score = double.parse(timeList[0]);
+  int _totalStep = 4;
+  late String currentUser;
+  late bool isGuest;
 
-  Future<void> _saveTimeRatingPoints(double score) async {
+  @override
+  void initState() {
+    super.initState();
+    currentUser = widget.userName ?? "vJ#CA:F3zP)C]A=V";
+
+    if (widget.userName != null && widget.userName != "vJ#CA:F3zP)C]A=V") {
+      isGuest = false;
+    } else {
+      isGuest = true;
+    }
+
+    _loadTimeRatingPoints();
+  }
+
+  Future<void> _loadTimeRatingPoints() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble("TimeRatingPoints", _score);
-    await prefs.setString("Frequency", _times);
+
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      _times = prefs.getString('TimeLabel') ?? timeList[0];
+      _score = prefs.getDouble('TimeRatingPoints') ?? double.parse(timeList[0]);
+      _totalStep = prefs.getInt('TotalStep') ?? 4;
+    } else {
+      _times = prefs.getString('${widget.userName}_ABP_TimeLabel') ?? "";
+      _score =
+          prefs.getDouble('${widget.userName}_ABP_TimeRatingPoints') ?? 0.0;
+      _totalStep = prefs.getInt('${widget.userName}_ABP_TotalStep') ?? 0;
+    }
+
+    update(_times);
+  }
+
+  Future<void> _saveTimeRatingPoints() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      await prefs.setString('TimeLabel', _times);
+      await prefs.setDouble('TimeRatingPoints', _score);
+      await prefs.setInt('TotalStep', _totalStep);
+    } else {
+      await prefs.setString('${currentUser}_ABP_TimeLabel', _times);
+      await prefs.setDouble('${currentUser}_ABP_TimeRatingPoints', _score);
+      await prefs.setInt('${currentUser}_ABP_TotalStep', _totalStep);
+    }
   }
 
   void update(String value) {
@@ -179,7 +222,9 @@ class _ABPTimeRatingState extends State<ABPTimeRating> {
       _score = score;
     });
 
-    _saveTimeRatingPoints(score);
+    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
+      _saveTimeRatingPoints();
+    }
   }
 
   Widget select(double screenWidth, double screenHeight) {
@@ -206,44 +251,44 @@ class _ABPTimeRatingState extends State<ABPTimeRating> {
         underline: SizedBox(),
         borderRadius: BorderRadius.circular(10),
         items:
-            timeList.map<DropdownMenuItem<String>>((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: StatefulBuilder(
-                  builder: (context, setState) {
-                    return Container(
-                      alignment: Alignment.center,
-                      margin: EdgeInsets.symmetric(
-                        horizontal: screenWidth * 0.02,
+        timeList.map<DropdownMenuItem<String>>((String value) {
+          return DropdownMenuItem<String>(
+            value: value,
+            child: StatefulBuilder(
+              builder: (context, setState) {
+                return Container(
+                  alignment: Alignment.center,
+                  margin: EdgeInsets.symmetric(
+                    horizontal: screenWidth * 0.02,
+                  ),
+                  decoration: BoxDecoration(
+                    color:
+                    _times == value
+                        ? Colors.grey.shade300
+                        : Colors.transparent,
+                    border:
+                    value == "10"
+                        ? null
+                        : Border(
+                      bottom: BorderSide(
+                        color: Colors.black54,
+                        width: 1,
                       ),
-                      decoration: BoxDecoration(
-                        color:
-                            _times == value
-                                ? Colors.grey.shade300
-                                : Colors.transparent,
-                        border:
-                            value == "10"
-                                ? null
-                                : Border(
-                                  bottom: BorderSide(
-                                    color: Colors.black54,
-                                    width: 1,
-                                  ),
-                                ),
-                      ),
-                      child: Text(
-                        "$value 小時",
-                        style: TextStyle(
-                          fontSize: screenWidth * 0.036,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              );
-            }).toList(),
+                    ),
+                  ),
+                  child: Text(
+                    "$value 小時",
+                    style: TextStyle(
+                      fontSize: screenWidth * 0.036,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        }).toList(),
         selectedItemBuilder: (BuildContext context) {
           return timeList.map((String value) {
             return Row(
@@ -300,12 +345,16 @@ class _ABPTimeRatingState extends State<ABPTimeRating> {
                 icon: Icon(Icons.home_outlined),
                 iconSize: screenWidth * 0.068,
                 color: Colors.black,
-                onPressed: () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => HomePage()),
-                    (Route<dynamic> route) => false,
-                  );
+                onPressed: () async {
+                  await clearGuestKeysForABP();
+
+                  if (context.mounted) {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => HomePage()),
+                          (Route<dynamic> route) => false,
+                    );
+                  }
                 },
               ),
             ],
@@ -315,15 +364,17 @@ class _ABPTimeRatingState extends State<ABPTimeRating> {
             child: Column(
               children: [
                 SizedBox(height: screenHeight * 0.006),
-                ProgressBar(
+                isGuest
+                    ? ProgressBar(
                   currentStep: 1,
-                  totalStep: 4,
+                  totalStep: _totalStep,
                   screenWidth: screenWidth,
                   screenHeight: screenHeight,
-                ),
+                )
+                    : SizedBox(height: screenHeight * 0.01),
                 ScoreBar(
                   labelText:
-                      "總分 : ${_score.toString().replaceAll(".0", "")} / 10 分",
+                  "總分 : ${_score.toString().replaceAll(".0", "")} / 10 分",
                   currentScore: _score,
                   textSize: screenWidth * 0.038,
                   maxScore: 10,
@@ -341,15 +392,69 @@ class _ABPTimeRatingState extends State<ABPTimeRating> {
                     SizedBox(height: screenHeight * 0.06),
                     select(screenWidth, screenHeight),
                     SizedBox(height: screenHeight * 0.42 - bottomPadding),
-                    PONButton(
-                      screenWidth: screenWidth,
-                      screenHeight: screenHeight,
-                      havePrevious: false,
-                      haveNextPage: true,
-                      previousText: "",
-                      nextText: "下一步",
-                      nextPage: BackLoadRating(),
-                      onTap: () => _saveTimeRatingPoints(_score),
+                    SizedBox(
+                      width: screenWidth * 0.36,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          await _saveTimeRatingPoints();
+
+                          if (!isGuest && context.mounted) {
+                            Navigator.pop(context);
+                          } else {
+                            if (context.mounted) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) => BackLoadRating(
+                                    userName: widget.userName,
+                                  ),
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: screenWidth * 0.036,
+                            vertical: screenHeight * 0.01,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (isGuest) ...[
+                              SizedBox(width: screenWidth * 0.036),
+                              Text(
+                                "下一步",
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.049,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(width: screenWidth * 0.03),
+                              Icon(
+                                Icons.arrow_forward,
+                                color: Colors.white,
+                                size: screenWidth * 0.064,
+                              ),
+                            ] else ...[
+                              Text(
+                                "保存",
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.049,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
