@@ -156,7 +156,7 @@ Widget additionalPointCard(
     ) {
   addCounterCallback();
   return Container(
-    width: screenWidth * 0.77,
+    width: screenWidth * 0.771,
     height: screenHeight * 0.13,
     decoration: BoxDecoration(
       color: Colors.white,
