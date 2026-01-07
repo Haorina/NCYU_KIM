@@ -42,9 +42,9 @@ class VideoProcessor(
 
     // Python: pose_scores
     private val poseScores = mapOf(
-        Pair(1, 1) to 0,  Pair(1, 2) to 3,  Pair(1, 3) to 3,  Pair(1, 4) to 7,  Pair(1, 5) to 9,
-        Pair(2, 2) to 5,  Pair(2, 3) to 5,  Pair(2, 4) to 10, Pair(2, 5) to 13,
-        Pair(3, 3) to 5,  Pair(3, 4) to 10, Pair(3, 5) to 13,
+        Pair(1, 1) to 0, Pair(1, 2) to 3, Pair(1, 3) to 3, Pair(1, 4) to 7, Pair(1, 5) to 9,
+        Pair(2, 2) to 5, Pair(2, 3) to 5, Pair(2, 4) to 10, Pair(2, 5) to 13,
+        Pair(3, 3) to 5, Pair(3, 4) to 10, Pair(3, 5) to 13,
         Pair(4, 4) to 15, Pair(4, 5) to 18,
         Pair(5, 5) to 20
     )
@@ -68,25 +68,25 @@ class VideoProcessor(
     }
 
     fun processVideo(videoFile: File): LinkedHashMap<String, Any?> {
-        var checkPersonInScreen = false // Python: 預設 False（只有 exception 才 True）
-
+        var checkPersonInScreen = false
         if (landmarker == null) initialize()
         val lm = landmarker ?: throw IllegalStateException("landmarker is null after initialize()")
-        val retriever = MediaMetadataRetriever()
 
+        val retriever = MediaMetadataRetriever()
         val landmarksFile = File(outputDir, "${videoFile.nameWithoutExtension}_landmarks.txt")
         val abcdFile = File(outputDir, "${videoFile.nameWithoutExtension}_abcd.txt")
         var landmarksWriter: BufferedWriter? = null
         var abcdWriter: BufferedWriter? = null
 
+        // 新增：記錄是否有任何一幀偵測到人
+        var hasDetectedPersonInAnyFrame = false
+
         try {
             landmarksWriter = BufferedWriter(FileWriter(landmarksFile))
             abcdWriter = BufferedWriter(FileWriter(abcdFile))
-
             landmarksWriter.write("=== 3D Pose Landmarks (MediaPipe World Coordinates) ===\n")
             landmarksWriter.write("Video: ${videoFile.name}\n")
             landmarksWriter.write("Generated: ${LocalDateTime.now()}\n\n")
-
             abcdWriter.write("=== REBA 加分項 ABCD 逐幀紀錄 ===\n")
             abcdWriter.write("Video: ${videoFile.name}\n")
             abcdWriter.write("A=軀幹扭轉或側彎, B=手臂遠離身體, C=手臂舉高, D=手高於肩膀\n\n")
@@ -104,7 +104,6 @@ class VideoProcessor(
 
             val durationMs = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
             val fps = getFrameRate(retriever).toInt().coerceAtLeast(1)
-
             val frameCount = if (durationMs > 0L) (durationMs.toDouble() / 1000.0 * fps.toDouble()).toInt() else 0
             val effectiveFrameCount = if (frameCount > 0) frameCount else {
                 val alt = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_FRAME_COUNT)?.toIntOrNull() ?: 0
@@ -121,7 +120,6 @@ class VideoProcessor(
             for (frameIndex in 0 until effectiveFrameCount) {
                 val timeUs = (frameIndex.toDouble() * 1_000_000.0 / fps.toDouble()).toLong()
                 var bitmap: Bitmap? = null
-
                 try {
                     bitmap = retriever.getFrameAtTime(timeUs, MediaMetadataRetriever.OPTION_CLOSEST)
                     if (bitmap == null) {
@@ -131,33 +129,31 @@ class VideoProcessor(
                         abcdWriter.write("Frame $frameIndex: No frame extracted\n")
                         continue
                     }
-
                     val argb8888Frame = if (bitmap.config == Bitmap.Config.ARGB_8888) bitmap
                     else bitmap.copy(Bitmap.Config.ARGB_8888, false)
-
                     val mpImage: MPImage = BitmapImageBuilder(argb8888Frame).build()
-
                     if (argb8888Frame != bitmap) bitmap.recycle()
 
                     val timestampMs = System.currentTimeMillis()
                     val result = lm.detectForVideo(mpImage, timestampMs)
-
                     val poseResult = PoseResult(result)
                     val analyzer = ResultAnalyzer(poseResult)
 
-                    val labelStr = analyzer.getLhcLabel()
-                    val labelInt = poseMapping[labelStr] ?: 0
-                    labels.add(labelInt)
-
-                    landmarksWriter.write("Frame $frameIndex (Label: $labelStr):\n")
-
+                    landmarksWriter.write("Frame $frameIndex (Label: ")
                     if (result.landmarks().isNotEmpty()) {
+                        // 有偵測到人 → 標記
+                        hasDetectedPersonInAnyFrame = true
+
+                        val labelStr = analyzer.getLhcLabel()
+                        val labelInt = poseMapping[labelStr] ?: 0
+                        labels.add(labelInt)
+                        landmarksWriter.write("$labelStr):\n")
+
                         val a = analyzer.checkIfTrunkIsTwistedOrLateralInclination()
                         val b = analyzer.checkIfHandsAtADistance()
                         val c = analyzer.checkIfArmsRaised()
                         val d = analyzer.checkIfHandsAboveShoulder()
                         aArray.add(a); bArray.add(b); cArray.add(c); dArray.add(d)
-
                         abcdWriter.write("Frame $frameIndex: A=$a, B=$b, C=$c, D=$d\n")
 
                         val positions = poseResult.getAllKptPositions()
@@ -169,11 +165,11 @@ class VideoProcessor(
                             landmarksWriter.write("$name: x=%.6f, y=%.6f, z=%.6f\n".format(x, y, z))
                         }
                     } else {
+                        labels.add(0)
                         aArray.add(false); bArray.add(false); cArray.add(false); dArray.add(false)
                         abcdWriter.write("Frame $frameIndex: No person detected\n")
-                        landmarksWriter.write("No landmarks detected\n")
+                        landmarksWriter.write("No person detected):\nNo landmarks detected\n")
                     }
-
                     landmarksWriter.write("\n")
                 } catch (e: Exception) {
                     Log.w("VideoProcessor", "Exception frame $frameIndex: ${e.message}")
@@ -186,12 +182,13 @@ class VideoProcessor(
                 }
             }
 
-            // ==================== 後處理（照你原本 Kotlin 的濾波流程；它已對齊 Python） ====================
+            // ==================== 新增：整段影片完全沒偵測到人，直接拋例外 ====================
+            if (!hasDetectedPersonInAnyFrame) {
+                throw NoPersonDetectedException("整段影片未偵測到任何人體姿勢，請重新錄製。")
+            }
+
+            // ==================== 後處理（原邏輯不變） ====================
             var totalFrames = labels.size
-
-            // Python: 不在正常流程更新 checkPersonInScreen；保持 false
-            // (你若未來要做「人是否入鏡」判斷，再另外加，不然兩端會不一致)
-
             val coarseLabels = labels.map { it?.let { fineToCoarse[it] ?: 1 } ?: 1 }
             val csv = max(1, fps * 3)
 
@@ -217,12 +214,10 @@ class VideoProcessor(
 
             val labelChangesCoarse = mutableListOf<Int>()
             val labelChangesFine = mutableListOf<Int>()
-
             var currentCoarse = coarseLabels[0]
             var con = getCon(currentCoarse)
             var consecutiveCount = 0
             var segmentStart = 0
-
             var previousCoarse: Int? = null
             var previousCount = 0
             var previousFine: Int? = null
@@ -230,7 +225,6 @@ class VideoProcessor(
 
             for (i in coarseLabels.indices) {
                 val cl = coarseLabels[i]
-
                 if (cl == currentCoarse) {
                     consecutiveCount++
                 } else if (consecutiveCount < con) {
@@ -256,7 +250,6 @@ class VideoProcessor(
                     }
                     currentCoarse = cl; con = getCon(currentCoarse); consecutiveCount = 1; segmentStart = i
                 }
-
                 if (i == coarseLabels.lastIndex) {
                     if (consecutiveCount < con) {
                         for (j in segmentStart until coarseLabels.size) {
@@ -325,15 +318,12 @@ class VideoProcessor(
             val bScore = getFrequencyScore(bRatio, 0.0, 1.0, 3.0)
             val cScore = getFrequencyScore(cRatio, 0.0, 0.5, 1.0)
             val dScore = getFrequencyScore(dRatio, 0.0, 1.0, 2.0)
-
             var extraScore = aScore + bScore + cScore + dScore
             if (extraScore > 6.0) extraScore = 6.0
 
             val totalScore = maxScore.toDouble() + extraScore
-
             val fStart = bestPair?.first?.let { coarseToRepFine[it] } ?: 0
             val fEnd = bestPair?.second?.let { coarseToRepFine[it] } ?: 0
-
             val worstChangeFinePair = bestPair?.let {
                 listOf(poseLabelReverse[fStart] ?: "A$fStart", poseLabelReverse[fEnd] ?: "A$fEnd")
             }
@@ -361,7 +351,7 @@ class VideoProcessor(
             )
         } catch (e: Exception) {
             Log.e("VideoProcessor", "Error processing video", e)
-            checkPersonInScreen = true // Python: exception => True
+            checkPersonInScreen = true
             throw e
         } finally {
             try { close() } catch (_: Exception) {}
@@ -380,3 +370,6 @@ class VideoProcessor(
             } ?: 30.0
     }
 }
+
+// 自訂例外，讓 Flutter 端容易辨識
+class NoPersonDetectedException(message: String) : Exception(message)
