@@ -46,7 +46,7 @@ class BPRResult extends StatefulWidget {
   State<BPRResult> createState() => _BPRResultState();
 }
 
-// 存檔邏輯 (保持不變)
+// 存檔邏輯
 Future<void> _saveBodyPosturePoints(
     String? userName,
     String videoPath,
@@ -226,7 +226,6 @@ class _BPRResultState extends State<BPRResult> {
   late List<CameraDescription> camera;
   bool isInitialized = false;
 
-  // 🔥 1. 新增變數：用來儲存顯示用的分數
   late double _twistOrLeanPoints;
   late double _distanceOfBodyCenterPoints;
   late double _armLiftPoints;
@@ -277,7 +276,6 @@ class _BPRResultState extends State<BPRResult> {
       });
   }
 
-  // 🔥 2. 新增函式：從 SharedPreferences 載入舊資料
   Future<void> _loadSavedData() async {
     if (widget.userName == null) return;
 
@@ -294,8 +292,6 @@ class _BPRResultState extends State<BPRResult> {
       _totalAdditionalPoints = prefs.getDouble("${prefix}TotalAdditionalPoints") ?? 0.0;
       _startPosture = prefs.getString("${prefix}StartPosture") ?? "";
       _endPosture = prefs.getString("${prefix}EndPosture") ?? "";
-      // 如果需要影片路徑也可以覆蓋，但通常從外部傳入的比較準
-      // _videoPath = prefs.getString("${prefix}VideoPath") ?? widget.videoPath;
     });
   }
 
@@ -303,7 +299,6 @@ class _BPRResultState extends State<BPRResult> {
   void initState() {
     super.initState();
 
-    // 🔥 3. 初始化變數：預設使用傳入的參數
     _twistOrLeanPoints = widget.twistOrLeanPoints;
     _distanceOfBodyCenterPoints = widget.distanceOfBodyCenterPoints;
     _armLiftPoints = widget.armLiftPoints;
@@ -318,11 +313,9 @@ class _BPRResultState extends State<BPRResult> {
     initCameras();
     _initializeVideoPlayer(_videoPath);
 
-    // 如果不是重新錄製 (也就是從選單點進來的 review 模式)，則載入舊資料
     if (widget.reRecord == false) {
       _loadSavedData();
     } else {
-      // 只有在 reRecord 不是 false (即新錄製) 時才存檔
       _saveBodyPosturePoints(
         widget.userName,
         widget.videoPath,
@@ -428,7 +421,6 @@ class _BPRResultState extends State<BPRResult> {
                   screenHeight: screenHeight,
                 ),
                 ScoreBar(
-                  // 🔥 4. 修改 UI：使用 _totalBodyPosturePoints
                   labelText:
                   "總分 : ${_totalBodyPosturePoints.toString().replaceAll(".0", "")} / 26 分",
                   currentScore: _totalBodyPosturePoints,
@@ -537,7 +529,6 @@ class _BPRResultState extends State<BPRResult> {
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      // 🔥 5. 修改 UI：使用 _startPosture
                                       if (_startPosture.isNotEmpty)
                                         SizedBox(
                                           child: Image.asset(
@@ -556,7 +547,6 @@ class _BPRResultState extends State<BPRResult> {
                                         ),
                                       ),
                                       SizedBox(width: screenWidth * 0.026),
-                                      // 🔥 6. 修改 UI：使用 _endPosture
                                       if (_endPosture.isNotEmpty)
                                         SizedBox(
                                           child: Image.asset(
@@ -575,112 +565,107 @@ class _BPRResultState extends State<BPRResult> {
                         ),
                         SizedBox(height: screenHeight * 0.03),
 
-                        // 🔥 7. 修改判斷邏輯：使用 local variables
-                        if (_twistOrLeanPoints != 0.0 ||
-                            _distanceOfBodyCenterPoints != 0.0 ||
-                            _armLiftPoints != 0.0 ||
-                            _aboveShoulderPoints != 0.0) ...[
-                          Container(
-                            alignment: Alignment.centerLeft,
-                            margin: EdgeInsets.only(
-                              left: screenWidth * 0.12,
-                              bottom: screenHeight * 0.008,
-                            ),
-                            child: Text(
-                              "額外加分項",
-                              style: TextStyle(
-                                fontSize: screenWidth * 0.048,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black87,
-                              ),
+                        // 額外加分項標題
+                        Container(
+                          alignment: Alignment.centerLeft,
+                          margin: EdgeInsets.only(
+                            left: screenWidth * 0.12,
+                            bottom: screenHeight * 0.008,
+                          ),
+                          child: Text(
+                            "額外加分項",
+                            style: TextStyle(
+                              fontSize: screenWidth * 0.048,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black87,
                             ),
                           ),
-                        ],
+                        ),
 
-                        // 🔥 8. 下方的卡片全部換成 _twistOrLeanPoints 等變數
-                        if (_twistOrLeanPoints != 0.0) ...[
-                          ValueListenableBuilder<int>(
-                            valueListenable: counter,
-                            builder: (BuildContext context, int value, Widget? child) {
-                              return Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  additionalPointCardDecoration(screenWidth, screenHeight, 0),
-                                  additionalPointCard(
-                                    screenWidth, screenHeight,
-                                    _twistOrLeanPoints < 3 ? "軀幹偶爾扭轉、側傾" : "軀幹經常扭轉、側傾",
-                                    _twistOrLeanPoints.toString().replaceAll(".0", ""),
-                                    "3", screenWidth * 0.34, screenHeight * 0.34, screenHeight * (-0.1), screenHeight * 0.2,
-                                    "assets/images/leanAndTwist.png", addCounter,
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                        ],
+                        // 動態列表生成 (包含排序功能)
+                        Builder(
+                          builder: (context) {
+                            // 1. 定義所有項目的資料結構
+                            List<Map<String, dynamic>> items = [
+                              {
+                                "score": _twistOrLeanPoints,
+                                "title": _twistOrLeanPoints < 3 ? "軀幹偶爾扭轉、側傾" : "軀幹經常扭轉、側傾",
+                                "maxScore": "3",
+                                "img": "assets/images/leanAndTwist.png",
+                                // 參數對應: imgWidth, imgHeight, imgOffsetTop, imgOffsetLeft (係數 x screenWidth 或 screenHeight)
+                                "w_factor": 0.34,
+                                "h_factor": 0.34,
+                                "top_factor": -0.1,
+                                "left_factor": 0.2,
+                              },
+                              {
+                                "score": _distanceOfBodyCenterPoints,
+                                "title": "手部遠離身體中心",
+                                "maxScore": "2",
+                                "img": "assets/images/distance_body_center.png",
+                                "w_factor": 0.33,
+                                "h_factor": 0.33,
+                                "top_factor": -0.085,
+                                "left_factor": 0.2,
+                              },
+                              {
+                                "score": _armLiftPoints,
+                                "title": "手臂抬舉",
+                                "maxScore": "3",
+                                "img": "assets/images/arm_lift.png",
+                                "w_factor": 0.3,
+                                "h_factor": 0.3,
+                                "top_factor": -0.06,
+                                "left_factor": 0.22,
+                              },
+                              {
+                                "score": _aboveShoulderPoints,
+                                "title": "雙手高舉過肩",
+                                "maxScore": "3",
+                                "img": "assets/images/above_shoulder.png",
+                                "w_factor": 0.34,
+                                "h_factor": 0.34,
+                                "top_factor": -0.09,
+                                "left_factor": 0.17,
+                              },
+                            ];
 
-                        if (_distanceOfBodyCenterPoints != 0.0) ...[
-                          ValueListenableBuilder<int>(
-                            valueListenable: counter,
-                            builder: (BuildContext context, int value, Widget? child) {
-                              return Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  additionalPointCardDecoration(screenWidth, screenHeight, 1),
-                                  additionalPointCard(
-                                    screenWidth, screenHeight,
-                                    "手部遠離身體中心",
-                                    _distanceOfBodyCenterPoints.toString().replaceAll(".0", ""),
-                                    "2", screenWidth * 0.33, screenHeight * 0.33, screenHeight * (-0.085), screenHeight * 0.2,
-                                    "assets/images/distance_body_center.png", addCounter,
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                        ],
+                            // 2. 進行排序：分數高的排前面 (降冪排序)
+                            items.sort((a, b) => (b['score'] as double).compareTo(a['score'] as double));
 
-                        if (_armLiftPoints != 0.0) ...[
-                          ValueListenableBuilder<int>(
-                            valueListenable: counter,
-                            builder: (BuildContext context, int value, Widget? child) {
-                              return Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  additionalPointCardDecoration(screenWidth, screenHeight, 2),
-                                  additionalPointCard(
-                                    screenWidth, screenHeight,
-                                    "手臂抬舉",
-                                    _armLiftPoints.toString().replaceAll(".0", ""),
-                                    "3", screenWidth * 0.3, screenHeight * 0.3, screenHeight * (-0.06), screenHeight * 0.22,
-                                    "assets/images/arm_lift.png", addCounter,
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                        ],
-
-                        if (_aboveShoulderPoints != 0.0) ...[
-                          ValueListenableBuilder<int>(
-                            valueListenable: counter,
-                            builder: (BuildContext context, int value, Widget? child) {
-                              return Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  additionalPointCardDecoration(screenWidth, screenHeight, 3),
-                                  additionalPointCard(
-                                    screenWidth, screenHeight,
-                                    "雙手高舉過肩",
-                                    _aboveShoulderPoints.toString().replaceAll(".0", ""),
-                                    "3", screenWidth * 0.34, screenHeight * 0.34, screenHeight * (-0.09), screenHeight * 0.17,
-                                    "assets/images/above_shoulder.png", addCounter,
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                        ],
+                            // 3. 遍歷列表生成 UI
+                            return Column(
+                              children: List.generate(items.length, (index) {
+                                final item = items[index];
+                                return ValueListenableBuilder<int>(
+                                  valueListenable: counter,
+                                  builder: (BuildContext context, int value, Widget? child) {
+                                    return Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        // 傳入 index 確保左側裝飾的顏色交替規律
+                                        additionalPointCardDecoration(screenWidth, screenHeight, index),
+                                        additionalPointCard(
+                                          screenWidth,
+                                          screenHeight,
+                                          item['title'],
+                                          (item['score'] as double).toString().replaceAll(".0", ""),
+                                          item['maxScore'],
+                                          screenWidth * (item['w_factor'] as double),
+                                          screenHeight * (item['h_factor'] as double),
+                                          screenHeight * (item['top_factor'] as double),
+                                          screenHeight * (item['left_factor'] as double),
+                                          item['img'],
+                                          addCounter,
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              }),
+                            );
+                          },
+                        ),
 
                         SizedBox(height: screenHeight * 0.02),
 
@@ -708,4 +693,4 @@ class _BPRResultState extends State<BPRResult> {
       ),
     );
   }
-}
+}1
