@@ -23,9 +23,8 @@ class BPRVideoAnalysing extends StatefulWidget {
 
 class _BPRVideoAnalysingState extends State<BPRVideoAnalysing> {
   static const platform = MethodChannel('video_processor');
-  // late String _uploadURL; // 沒用到可以註解掉
+  late String _uploadURL;
   late String currentUser;
-
   static const Map<String, String> poseImageMap = {
     '1': '1',
     '2': '2',
@@ -37,23 +36,20 @@ class _BPRVideoAnalysingState extends State<BPRVideoAnalysing> {
     '8': '5-2',
     '9': '5-3',
   };
-
   @override
   void initState() {
     super.initState();
     currentUser = widget.userName ?? "vJ#CA:F3zP)C]A=V";
   }
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (mounted) {
-      // _testPing(); // 測試完畢可註解掉保持乾淨
+      _testPing();  // 加入 ping 測試
       _processVideo(MediaQuery.of(context).size.width, MediaQuery.of(context).size.height);
     }
   }
 
-  /*
   Future<void> _testPing() async {
     try {
       print("Flutter: 呼叫 ping 測試");
@@ -63,7 +59,6 @@ class _BPRVideoAnalysingState extends State<BPRVideoAnalysing> {
       print("Flutter: ping 測試失敗 ! $e");
     }
   }
-  */
 
   Future<void> _processVideo(double screenWidth, double screenHeight) async {
     try {
@@ -75,11 +70,6 @@ class _BPRVideoAnalysingState extends State<BPRVideoAnalysing> {
             context,
             MaterialPageRoute(
               builder: (context) => BPRResult(
-                // 🔥 修正重點：傳遞 userName 與 reRecord 給結果頁
-                userName: widget.userName,
-                reRecord: widget.reRecord,
-
-                // 以下保持原樣
                 twistOrLeanPoints: (result['twistAndLanternal'] ?? 0.0).toDouble(),
                 distanceOfBodyCenterPoints: (result['distance of body'] ?? 0.0).toDouble(),
                 armLiftPoints: (result['arm raise'] ?? 0.0).toDouble(),
@@ -95,26 +85,31 @@ class _BPRVideoAnalysingState extends State<BPRVideoAnalysing> {
           );
         }
       } else {
-        _showErrorToast(screenWidth);
+        _showErrorToast(screenWidth, "影片處理失敗，請重新錄製");
         if (mounted) Navigator.pop(context);
       }
-    } on PlatformException {
-      _showErrorToast(screenWidth);
+    } on PlatformException catch (e) {
+      // 特別處理「完全沒偵測到人」的例外
+      if (e.message?.contains("整段影片未偵測到任何人體姿勢，請重新錄製") == true) {
+        _showErrorToast(screenWidth, "沒有偵測到人體姿勢\n請重新錄製");
+      } else {
+        // 其他平台錯誤（如模型載入失敗、檔案讀取錯誤等）
+        _showErrorToast(screenWidth, "影片處理失敗\n請重新錄製");
+      }
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      // 增加一般的錯誤捕捉
-      debugPrint("處理影片發生未知錯誤: $e");
-      _showErrorToast(screenWidth);
+      // 捕捉其他非 PlatformException 的錯誤（保險起見）
+      _showErrorToast(screenWidth, "發生未知錯誤\n請重新錄製");
       if (mounted) Navigator.pop(context);
     }
   }
 
-  void _showErrorToast(double screenWidth) {
+  void _showErrorToast(double screenWidth, String message) {
     Fluttertoast.showToast(
-      msg: "影片處理失敗\n請重新錄製",
-      toastLength: Toast.LENGTH_SHORT,
+      msg: message,
+      toastLength: Toast.LENGTH_LONG,
       gravity: ToastGravity.CENTER,
-      timeInSecForIosWeb: 1,
+      timeInSecForIosWeb: 3,
       backgroundColor: Colors.white,
       textColor: const Color(0xff7392ff),
       fontSize: screenWidth * 0.05,
