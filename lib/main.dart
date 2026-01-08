@@ -185,7 +185,7 @@ Widget button(
             ? Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            SizedBox(width: screenWidth * 0.016),
+            SizedBox(width: screenWidth * 0.015),
             Text(
               text,
               style: TextStyle(
