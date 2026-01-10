@@ -426,7 +426,7 @@ class _WeightHandlingRatingState extends State<WeightHandlingRating> {
                                   child: Text(
                                     "短時間內單手承重，或雙手重量明顯不同",
                                     style: TextStyle(
-                                      fontSize: screenWidth * 0.042,
+                                      fontSize: screenWidth * 0.041,
                                       fontWeight: FontWeight.w500,
                                       color: Colors.white,
                                       decoration: TextDecoration.none,

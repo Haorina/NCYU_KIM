@@ -385,7 +385,7 @@ Widget title5(BuildContext context, double screenWidth, double screenHeight) {
                     SizedBox(
                       width: screenWidth * 0.65,
                       child: Text(
-                        "ex:\n•厚重雨衣、全身防護裝、呼吸防護具、\n 裝備腰帶等",
+                        "ex:\n•厚重雨衣、全身防護裝、呼吸防護具、裝備腰帶等",
                         style: TextStyle(
                           fontSize: screenWidth * 0.038,
                           fontWeight: FontWeight.normal,
@@ -1092,7 +1092,7 @@ class _WorkConditionRatingState extends State<WorkConditionRating> {
                                 SizedBox(
                                   width: screenWidth * 0.7,
                                   child: Text(
-                                    "ex:\n•搬運平滑但乾燥的紙箱\n•戴手套工作材質影響摩擦力等\n•物品沒有專門設計的握把、握持位置不符\n 合人體工學\n•需要出力握緊但不會滑脫的物品",
+                                    "ex:\n•搬運平滑但乾燥的紙箱\n•戴手套工作材質影響摩擦力等\n•物品沒有專門設計的握把、握持位置不符合人體工學\n•需要出力握緊但不會滑脫的物品",
                                     style: TextStyle(
                                       fontSize: screenWidth * 0.038,
                                       fontWeight: FontWeight.normal,

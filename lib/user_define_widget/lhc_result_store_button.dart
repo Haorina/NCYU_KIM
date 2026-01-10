@@ -21,59 +21,81 @@ class LHCResultStoreButton extends StatelessWidget {
     final prefs = await SharedPreferences.getInstance();
     final users = prefs.getStringList('LHC_Users') ?? <String>[];
 
-    // 🔥 修正關鍵：定義讀取來源的前綴
-    // 因為資料目前存在訪客 ID (userName) 底下，讀取時必須加上前綴
-    final String sourceLHCPrefix = "${userName}_LHC_";
-    final String sourceUserPrefix = "${userName}_";
+    // 🔥 強大的萬能讀取小幫手 (定義在函式內部)
+    // 邏輯：優先找標準格式 -> 其次找只有 ID 的 -> 最後找原始 Key -> 都沒有回傳預設值
 
-    // --- 1. 從目前的訪客帳號讀取暫存資料 ---
-    final String gender = prefs.getString("${sourceUserPrefix}Gender") ?? "";
-    // 注意：部分欄位可能沒有 LHC 前綴，需依照你原本存入的方式讀取
-    // 這裡假設 Weight 是帶有 LHC 前綴的 (參照你下方的寫入邏輯)
-    final String weight = prefs.getString("${sourceLHCPrefix}Weight") ?? "";
+    double getSmartDouble(String key) {
+      return prefs.getDouble("${userName}_LHC_$key") ??   // 1. 標準格式
+          prefs.getDouble("${userName}_$key") ??       // 2. 漏加 LHC
+          prefs.getDouble(key) ??                      // 3. 完全沒加前綴
+          0.0;
+    }
 
-    final int weightRatingPoints = prefs.getInt("${sourceLHCPrefix}WeightRatingPoints") ?? 0;
-    final String videoPath = prefs.getString("${sourceLHCPrefix}VideoPath") ?? "";
+    int getSmartInt(String key) {
+      return prefs.getInt("${userName}_LHC_$key") ??
+          prefs.getInt("${userName}_$key") ??
+          prefs.getInt(key) ??
+          0;
+    }
 
-    final double twistOrLeanPoints = prefs.getDouble("${sourceLHCPrefix}TwistOrLeanPoints") ?? 0.0;
-    final double distanceOfBodyCenterPoints = prefs.getDouble("${sourceLHCPrefix}DistanceOfBodyCenterPoints") ?? 0.0;
-    final double armLiftPoints = prefs.getDouble("${sourceLHCPrefix}ArmLiftPoints") ?? 0.0;
-    final double aboveShoulderPoints = prefs.getDouble("${sourceLHCPrefix}AboveShoulderPoints") ?? 0.0;
-    final double bodyPosturePoints = prefs.getDouble("${sourceLHCPrefix}BodyPosturePoints") ?? 0.0;
-    final double totalAdditionalPoints = prefs.getDouble("${sourceLHCPrefix}TotalAdditionalPoints") ?? 0.0;
+    String getSmartString(String key) {
+      return prefs.getString("${userName}_LHC_$key") ??
+          prefs.getString("${userName}_$key") ??
+          prefs.getString(key) ??
+          "";
+    }
 
-    // 🔥 這是你原本變成 0 的欄位，現在加上前綴就能讀到了
-    final double totalBodyPosturePoints = prefs.getDouble("${sourceLHCPrefix}TotalBodyPosturePoints") ?? 0.0;
+    // --- 1. 讀取資料 (使用小幫手，自動抓取最有可能的數值) ---
 
-    final String startPosture = prefs.getString("${sourceLHCPrefix}StartPosture") ?? "";
-    final String endPosture = prefs.getString("${sourceLHCPrefix}EndPosture") ?? "";
+    // 基本資料
+    final String gender = getSmartString("Gender");
+    final String weight = getSmartString("Weight");
 
-    final String timeLabel = prefs.getString('${sourceLHCPrefix}TimeLabel') ?? "";
-    final double timeRatingPoints = prefs.getDouble('${sourceLHCPrefix}TimeRatingPoints') ?? 0.0;
+    // 負重評級
+    final int weightRatingPoints = getSmartInt("WeightRatingPoints");
 
-    final String weightHandlingLabel = prefs.getString('${sourceLHCPrefix}WeightHandlingLabel') ?? "";
-    final int weightHandlingRatingPoints = prefs.getInt('${sourceLHCPrefix}WeightHandlingRatingPoints') ?? 0;
+    // 身體姿勢 (BPR)
+    final String videoPath = getSmartString("VideoPath");
+    final double twistOrLeanPoints = getSmartDouble("TwistOrLeanPoints");
+    final double distanceOfBodyCenterPoints = getSmartDouble("DistanceOfBodyCenterPoints");
+    final double armLiftPoints = getSmartDouble("ArmLiftPoints");
+    final double aboveShoulderPoints = getSmartDouble("AboveShoulderPoints");
+    final double bodyPosturePoints = getSmartDouble("BodyPosturePoints");
+    final double totalAdditionalPoints = getSmartDouble("TotalAdditionalPoints");
+    final double totalBodyPosturePoints = getSmartDouble("TotalBodyPosturePoints");
+    final String startPosture = getSmartString("StartPosture");
+    final String endPosture = getSmartString("EndPosture");
 
-    final String workConditionLabel1 = prefs.getString('${sourceLHCPrefix}WorkConditionLabel1') ?? "";
-    final String workConditionLabel2 = prefs.getString('${sourceLHCPrefix}WorkConditionLabel2') ?? "";
-    final String workConditionLabel3 = prefs.getString('${sourceLHCPrefix}WorkConditionLabel3') ?? "";
-    final String workConditionLabel4 = prefs.getString('${sourceLHCPrefix}WorkConditionLabel4') ?? "";
-    final String workConditionLabel5 = prefs.getString('${sourceLHCPrefix}WorkConditionLabel5') ?? "";
-    final String workConditionLabel6 = prefs.getString('${sourceLHCPrefix}WorkConditionLabel6') ?? "";
+    // 時間評級
+    final String timeLabel = getSmartString("TimeLabel");
+    final double timeRatingPoints = getSmartDouble("TimeRatingPoints");
 
-    final int workConditionScore1 = prefs.getInt('${sourceLHCPrefix}WorkConditionScore1') ?? 0;
-    final int workConditionScore2 = prefs.getInt('${sourceLHCPrefix}WorkConditionScore2') ?? 0;
-    final int workConditionScore3 = prefs.getInt('${sourceLHCPrefix}WorkConditionScore3') ?? 0;
-    final int workConditionScore4 = prefs.getInt('${sourceLHCPrefix}WorkConditionScore4') ?? 0;
-    final int workConditionScore5 = prefs.getInt('${sourceLHCPrefix}WorkConditionScore5') ?? 0;
-    final int workConditionScore6 = prefs.getInt('${sourceLHCPrefix}WorkConditionScore6') ?? 0;
+    // 負荷處理
+    final String weightHandlingLabel = getSmartString("WeightHandlingLabel");
+    final int weightHandlingRatingPoints = getSmartInt("WeightHandlingRatingPoints");
 
-    final int workConditionRatingPoints = prefs.getInt('${sourceLHCPrefix}WorkConditionRatingPoints') ?? 0;
+    // 不良工作條件
+    final String workConditionLabel1 = getSmartString("WorkConditionLabel1");
+    final String workConditionLabel2 = getSmartString("WorkConditionLabel2");
+    final String workConditionLabel3 = getSmartString("WorkConditionLabel3");
+    final String workConditionLabel4 = getSmartString("WorkConditionLabel4");
+    final String workConditionLabel5 = getSmartString("WorkConditionLabel5");
+    final String workConditionLabel6 = getSmartString("WorkConditionLabel6");
 
-    final String workOrganizationLabel = prefs.getString('${sourceLHCPrefix}WorkOrganizationLabel') ?? "";
-    final int workOrganizationRatingPoints = prefs.getInt('${sourceLHCPrefix}WorkOrganizationRatingPoints') ?? 0;
+    final int workConditionScore1 = getSmartInt("WorkConditionScore1");
+    final int workConditionScore2 = getSmartInt("WorkConditionScore2");
+    final int workConditionScore3 = getSmartInt("WorkConditionScore3");
+    final int workConditionScore4 = getSmartInt("WorkConditionScore4");
+    final int workConditionScore5 = getSmartInt("WorkConditionScore5");
+    final int workConditionScore6 = getSmartInt("WorkConditionScore6");
+    final int workConditionRatingPoints = getSmartInt("WorkConditionRatingPoints");
 
-    // --- 2. 驗證與寫入新帳號 ---
+    // 工作組織
+    final String workOrganizationLabel = getSmartString("WorkOrganizationLabel");
+    final int workOrganizationRatingPoints = getSmartInt("WorkOrganizationRatingPoints");
+
+
+    // --- 2. 寫入到新使用者的 Key (這裡保持嚴謹，存入標準格式) ---
     if (newUsername.isEmpty) {
       await Fluttertoast.showToast(
         msg: "使用者名稱不能為空",
@@ -83,54 +105,55 @@ class LHCResultStoreButton extends StatelessWidget {
         textColor: Colors.red,
       );
     } else {
-      // 判斷是否為新使用者，如果是，加入列表
       if (!users.contains(newUsername)) {
         users.add(newUsername);
         await prefs.setStringList('LHC_Users', users);
       }
 
-      // 不管是新舊使用者，都執行寫入 (覆蓋資料)
-      // 使用 newUsername 作為新的 Key 前綴
+      // 使用 newUsername 寫入標準格式
+      final String targetPrefix = "${newUsername}_LHC_";
+
       await prefs.setString('${newUsername}_Gender', gender);
-      await prefs.setString('${newUsername}_LHC_Weight', weight);
-      await prefs.setInt('${newUsername}_LHC_WeightRatingPoints', weightRatingPoints);
-      await prefs.setString('${newUsername}_LHC_VideoPath', videoPath);
-      await prefs.setDouble('${newUsername}_LHC_TwistOrLeanPoints', twistOrLeanPoints);
-      await prefs.setDouble('${newUsername}_LHC_DistanceOfBodyCenterPoints', distanceOfBodyCenterPoints);
-      await prefs.setDouble('${newUsername}_LHC_ArmLiftPoints', armLiftPoints);
-      await prefs.setDouble('${newUsername}_LHC_AboveShoulderPoints', aboveShoulderPoints);
-      await prefs.setDouble('${newUsername}_LHC_BodyPosturePoints', bodyPosturePoints);
-      await prefs.setDouble('${newUsername}_LHC_TotalAdditionalPoints', totalAdditionalPoints);
+      await prefs.setString('${targetPrefix}Weight', weight); // 統一存入 LHC 下
 
-      // 🔥 這裡寫入的就會是上面讀到的正確數值，不再是 0.0
-      await prefs.setDouble('${newUsername}_LHC_TotalBodyPosturePoints', totalBodyPosturePoints);
+      await prefs.setInt('${targetPrefix}WeightRatingPoints', weightRatingPoints);
 
-      await prefs.setString('${newUsername}_LHC_StartPosture', startPosture);
-      await prefs.setString('${newUsername}_LHC_EndPosture', endPosture);
-      await prefs.setString('${newUsername}_LHC_TimeLabel', timeLabel);
-      await prefs.setDouble('${newUsername}_LHC_TimeRatingPoints', timeRatingPoints);
-      await prefs.setString('${newUsername}_LHC_WeightHandlingLabel', weightHandlingLabel);
-      await prefs.setInt('${newUsername}_LHC_WeightHandlingRatingPoints', weightHandlingRatingPoints);
+      await prefs.setString('${targetPrefix}VideoPath', videoPath);
+      await prefs.setDouble('${targetPrefix}TwistOrLeanPoints', twistOrLeanPoints);
+      await prefs.setDouble('${targetPrefix}DistanceOfBodyCenterPoints', distanceOfBodyCenterPoints);
+      await prefs.setDouble('${targetPrefix}ArmLiftPoints', armLiftPoints);
+      await prefs.setDouble('${targetPrefix}AboveShoulderPoints', aboveShoulderPoints);
+      await prefs.setDouble('${targetPrefix}BodyPosturePoints', bodyPosturePoints);
+      await prefs.setDouble('${targetPrefix}TotalAdditionalPoints', totalAdditionalPoints);
+      await prefs.setDouble('${targetPrefix}TotalBodyPosturePoints', totalBodyPosturePoints);
+      await prefs.setString('${targetPrefix}StartPosture', startPosture);
+      await prefs.setString('${targetPrefix}EndPosture', endPosture);
 
-      await prefs.setString('${newUsername}_LHC_WorkConditionLabel1', workConditionLabel1);
-      await prefs.setString('${newUsername}_LHC_WorkConditionLabel2', workConditionLabel2);
-      await prefs.setString('${newUsername}_LHC_WorkConditionLabel3', workConditionLabel3);
-      await prefs.setString('${newUsername}_LHC_WorkConditionLabel4', workConditionLabel4);
-      await prefs.setString('${newUsername}_LHC_WorkConditionLabel5', workConditionLabel5);
-      await prefs.setString('${newUsername}_LHC_WorkConditionLabel6', workConditionLabel6);
+      await prefs.setString('${targetPrefix}TimeLabel', timeLabel);
+      await prefs.setDouble('${targetPrefix}TimeRatingPoints', timeRatingPoints);
 
-      await prefs.setInt('${newUsername}_LHC_WorkConditionScore1', workConditionScore1);
-      await prefs.setInt('${newUsername}_LHC_WorkConditionScore2', workConditionScore2);
-      await prefs.setInt('${newUsername}_LHC_WorkConditionScore3', workConditionScore3);
-      await prefs.setInt('${newUsername}_LHC_WorkConditionScore4', workConditionScore4);
-      await prefs.setInt('${newUsername}_LHC_WorkConditionScore5', workConditionScore5);
-      await prefs.setInt('${newUsername}_LHC_WorkConditionScore6', workConditionScore6);
+      await prefs.setString('${targetPrefix}WeightHandlingLabel', weightHandlingLabel);
+      await prefs.setInt('${targetPrefix}WeightHandlingRatingPoints', weightHandlingRatingPoints);
 
-      await prefs.setInt('${newUsername}_LHC_WorkConditionRatingPoints', workConditionRatingPoints);
-      await prefs.setString('${newUsername}_LHC_WorkOrganizationLabel', workOrganizationLabel);
-      await prefs.setInt('${newUsername}_LHC_WorkOrganizationRatingPoints', workOrganizationRatingPoints);
+      await prefs.setString('${targetPrefix}WorkConditionLabel1', workConditionLabel1);
+      await prefs.setString('${targetPrefix}WorkConditionLabel2', workConditionLabel2);
+      await prefs.setString('${targetPrefix}WorkConditionLabel3', workConditionLabel3);
+      await prefs.setString('${targetPrefix}WorkConditionLabel4', workConditionLabel4);
+      await prefs.setString('${targetPrefix}WorkConditionLabel5', workConditionLabel5);
+      await prefs.setString('${targetPrefix}WorkConditionLabel6', workConditionLabel6);
 
-      // 顯示成功訊息
+      await prefs.setInt('${targetPrefix}WorkConditionScore1', workConditionScore1);
+      await prefs.setInt('${targetPrefix}WorkConditionScore2', workConditionScore2);
+      await prefs.setInt('${targetPrefix}WorkConditionScore3', workConditionScore3);
+      await prefs.setInt('${targetPrefix}WorkConditionScore4', workConditionScore4);
+      await prefs.setInt('${targetPrefix}WorkConditionScore5', workConditionScore5);
+      await prefs.setInt('${targetPrefix}WorkConditionScore6', workConditionScore6);
+
+      await prefs.setInt('${targetPrefix}WorkConditionRatingPoints', workConditionRatingPoints);
+
+      await prefs.setString('${targetPrefix}WorkOrganizationLabel', workOrganizationLabel);
+      await prefs.setInt('${targetPrefix}WorkOrganizationRatingPoints', workOrganizationRatingPoints);
+
       await Fluttertoast.showToast(
         msg: "已保存 $newUsername 的檢測紀錄",
         toastLength: Toast.LENGTH_SHORT,
@@ -191,7 +214,6 @@ class LHCResultStoreButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 檢查是否為訪客 ID (這裡的邏輯是你原本的)
     return userName == "vJ#CA:F3zP)C]A=V"
         ? SizedBox(
       child: Row(

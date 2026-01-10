@@ -247,9 +247,9 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                                   child: SizedBox(
                                     width: screenWidth * 0.7,
                                     child: Text(
-                                      "工作類型很多樣，不會一整天都做同一種很累的工作而一直同部位出力而受",
+                                      "工作類型很多樣，不會一整天都做同一種很累的工作而一直同部位出力而受傷",
                                       style: TextStyle(
-                                        fontSize: screenWidth * 0.042,
+                                        fontSize: screenWidth * 0.041,
                                         fontWeight: FontWeight.w500,
                                         color: Colors.white,
                                         decoration: TextDecoration.none,
@@ -262,7 +262,7 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                                   child: Text(
                                     "ex:\n•早上搬東西，中午整理資料，下午清潔",
                                     style: TextStyle(
-                                      fontSize: screenWidth * 0.038,
+                                      fontSize: screenWidth * 0.035,
                                       fontWeight: FontWeight.normal,
                                       color: Colors.white,
                                       decoration: TextDecoration.none,
@@ -402,7 +402,7 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                                     child: Text(
                                       "工作內容變化不大，但偶爾會有一整天集中做一樣、高強度的工作",
                                       style: TextStyle(
-                                        fontSize: screenWidth * 0.042,
+                                        fontSize: screenWidth * 0.041,
                                         fontWeight: FontWeight.w500,
                                         color: Colors.white,
                                         decoration: TextDecoration.none,
@@ -413,7 +413,7 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                                 SizedBox(
                                   width: screenWidth * 0.7,
                                   child: Text(
-                                    "ex:\n•大多數時間都在搬較小的貨和點貨，但每\n 禮拜固定一兩天一整天都在搬比較重的東\n 西",
+                                    "ex:\n•大多數時間都在搬較小的貨和點貨，但每禮拜固定一兩天一整天都在搬比較重的東西",
                                     style: TextStyle(
                                       fontSize: screenWidth * 0.038,
                                       fontWeight: FontWeight.normal,
@@ -555,7 +555,7 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                                     child: Text(
                                       "幾乎整天都做同種又重又累的工作，身體沒有休息或變換的機會，造成身體某些部位過度疲勞或受傷",
                                       style: TextStyle(
-                                        fontSize: screenWidth * 0.042,
+                                        fontSize: screenWidth * 0.041,
                                         fontWeight: FontWeight.w500,
                                         color: Colors.white,
                                         decoration: TextDecoration.none,
@@ -566,7 +566,7 @@ class _WorkOrganizationRatingState extends State<WorkOrganizationRating> {
                                 SizedBox(
                                   width: screenWidth * 0.7,
                                   child: Text(
-                                    "ex:\n•一整天都彎腰搬重物，沒有其他輕鬆的工\n 作可以穿插",
+                                    "ex:\n•一整天都彎腰搬重物，沒有其他輕鬆的工作可以穿插",
                                     style: TextStyle(
                                       fontSize: screenWidth * 0.038,
                                       fontWeight: FontWeight.normal,
