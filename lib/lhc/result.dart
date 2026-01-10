@@ -48,31 +48,41 @@ class _ResultState extends State<Result> {
   Future<void> _loadResultPoints() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    if (widget.userName == null || widget.userName == "vJ#CA:F3zP)C]A=V") {
-      weightRatingPoints = prefs.getInt('WeightRatingPoints') ?? 0;
-      totalBodyPosturePoints = prefs.getDouble('TotalBodyPosturePoints') ?? 0.0;
-      timeRatingPoints = prefs.getDouble('TimeRatingPoints') ?? 0.0;
-      weightHandlingRatingPoints =
-          prefs.getInt('WeightHandlingRatingPoints') ?? 0;
-      workConditionRatingPoints =
-          prefs.getInt('WorkConditionRatingPoints') ?? 0;
-      workOrganizationRatingPoints =
-          prefs.getInt('WorkOrganizationRatingPoints') ?? 0;
-    } else {
-      weightRatingPoints =
-          prefs.getInt('${widget.userName}_LHC_WeightRatingPoints') ?? 0;
-      totalBodyPosturePoints =
-          prefs.getDouble('${widget.userName}_LHC_TotalBodyPosturePoints') ?? 0.0;
-      timeRatingPoints =
-          prefs.getDouble('${widget.userName}_LHC_TimeRatingPoints') ?? 0.0;
-      weightHandlingRatingPoints =
-          prefs.getInt('${widget.userName}_LHC_WeightHandlingRatingPoints') ?? 0;
-      workConditionRatingPoints =
-          prefs.getInt('${widget.userName}_LHC_WorkConditionRatingPoints') ?? 0;
-      workOrganizationRatingPoints =
-          prefs.getInt('${widget.userName}_LHC_WorkOrganizationRatingPoints') ?? 0;
+    // 🔥 萬能讀取小幫手：自動嘗試三種可能的 Key 格式
+    // 1. 標準格式 (vJ#..._LHC_Key) -> 我們新改的
+    // 2. 舊格式 (vJ#..._Key)
+    // 3. 原始格式 (Key) -> 訪客模式原本的存法
+
+    int getSmartInt(String key) {
+      return prefs.getInt("${currentUser}_LHC_$key") ??
+          prefs.getInt("${currentUser}_$key") ??
+          prefs.getInt(key) ??
+          0;
     }
 
+    double getSmartDouble(String key) {
+      return prefs.getDouble("${currentUser}_LHC_$key") ??
+          prefs.getDouble("${currentUser}_$key") ??
+          prefs.getDouble(key) ??
+          0.0;
+    }
+
+    setState(() {
+      // 全部改用 Smart Getter 讀取
+      weightRatingPoints = getSmartInt('WeightRatingPoints');
+
+      totalBodyPosturePoints = getSmartDouble('TotalBodyPosturePoints');
+
+      timeRatingPoints = getSmartDouble('TimeRatingPoints');
+
+      weightHandlingRatingPoints = getSmartInt('WeightHandlingRatingPoints');
+
+      workConditionRatingPoints = getSmartInt('WorkConditionRatingPoints');
+
+      workOrganizationRatingPoints = getSmartInt('WorkOrganizationRatingPoints');
+    });
+
+    // 計算總分邏輯維持不變
     totalScore =
         timeRatingPoints *
             (weightRatingPoints +
@@ -80,6 +90,7 @@ class _ResultState extends State<Result> {
                 weightHandlingRatingPoints +
                 workConditionRatingPoints +
                 workOrganizationRatingPoints);
+
     List<MapEntry<String, num>> scoreEntries = [
       MapEntry("負重評級", weightRatingPoints),
       MapEntry("身體姿勢", totalBodyPosturePoints),
@@ -91,7 +102,6 @@ class _ResultState extends State<Result> {
     scoreEntries.sort((a, b) => b.value.compareTo(a.value));
     maxScore = scoreEntries.take(3).map((entry) => entry.value).toList();
     maxScoreText = scoreEntries.take(3).map((entry) => entry.key).toList();
-    setState(() {});
   }
 
   @override
