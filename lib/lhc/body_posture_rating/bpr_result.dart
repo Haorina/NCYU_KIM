@@ -589,7 +589,10 @@ class _BPRResultState extends State<BPRResult> {
                             List<Map<String, dynamic>> items = [
                               {
                                 "score": _twistOrLeanPoints,
-                                "title": _twistOrLeanPoints < 3 ? "軀幹偶爾扭轉、側傾" : "軀幹經常扭轉、側傾",
+                                "title":
+                                _twistOrLeanPoints < 1 ? "軀幹不常扭轉、側傾" :
+                                _twistOrLeanPoints < 2 ? "軀幹有時扭轉、側傾":
+                                _twistOrLeanPoints < 3 ? "軀幹偶爾扭轉、側傾":"軀幹經常扭轉、側傾",
                                 "maxScore": "3",
                                 "img": "assets/images/leanAndTwist.png",
                                 // 參數對應: imgWidth, imgHeight, imgOffsetTop, imgOffsetLeft (係數 x screenWidth 或 screenHeight)
@@ -600,17 +603,22 @@ class _BPRResultState extends State<BPRResult> {
                               },
                               {
                                 "score": _distanceOfBodyCenterPoints,
-                                "title": "手部遠離身體中心",
+                                "title":
+                                _distanceOfBodyCenterPoints< 1 ? "手部不常遠離身體中心" :
+                                _distanceOfBodyCenterPoints < 2 ? "手部有時遠離身體中心":"手部經常遠離身體中心",
                                 "maxScore": "2",
                                 "img": "assets/images/distance_body_center.png",
                                 "w_factor": 0.33,
                                 "h_factor": 0.33,
-                                "top_factor": -0.085,
-                                "left_factor": 0.2,
+                                "top_factor": -0.065,
+                                "left_factor": 0.22,
                               },
                               {
                                 "score": _armLiftPoints,
-                                "title": "手臂抬舉",
+                                "title":
+                                _armLiftPoints< 1 ? "手臂不常抬舉" :
+                                _armLiftPoints < 2 ? "手臂有時抬舉":
+                                _armLiftPoints < 3 ? "手臂偶爾抬舉":"手臂經常抬舉",
                                 "maxScore": "3",
                                 "img": "assets/images/arm_lift.png",
                                 "w_factor": 0.3,
@@ -620,13 +628,16 @@ class _BPRResultState extends State<BPRResult> {
                               },
                               {
                                 "score": _aboveShoulderPoints,
-                                "title": "雙手高舉過肩",
+                                "title":
+                                _aboveShoulderPoints< 1 ? "雙手不常高舉過肩" :
+                                _aboveShoulderPoints < 2 ? "雙手有時高舉過肩":
+                                _aboveShoulderPoints < 3 ? "雙手偶爾高舉過肩":"雙手經常高舉過肩",
                                 "maxScore": "3",
                                 "img": "assets/images/above_shoulder.png",
                                 "w_factor": 0.34,
                                 "h_factor": 0.34,
-                                "top_factor": -0.09,
-                                "left_factor": 0.17,
+                                "top_factor": -0.07,
+                                "left_factor": 0.19,
                               },
                             ];
 
