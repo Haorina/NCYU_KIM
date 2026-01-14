@@ -634,7 +634,7 @@ class _BPRResultState extends State<BPRResult> {
                                 "img": "assets/images/above_shoulder.png",
                                 "w_factor": 0.34,
                                 "h_factor": 0.34,
-                                "top_factor": -0.07,
+                                "top_factor": -0.08,
                                 "left_factor": 0.19,
                               },
                             ];
