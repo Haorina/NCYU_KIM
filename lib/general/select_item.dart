@@ -106,7 +106,7 @@ class SelectItem extends StatelessWidget {
                               ) => Center(
                             child: Container(
                               width: screenWidth * 0.85,
-                              height: screenHeight * 0.265,
+                              height: screenHeight * 0.270,
                               decoration: BoxDecoration(
                                 color: const Color(0XCC101010),
                                 borderRadius: BorderRadius.circular(10),
