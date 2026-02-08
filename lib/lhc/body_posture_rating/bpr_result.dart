@@ -539,13 +539,30 @@ class _BPRResultState extends State<BPRResult> {
                                           ),
                                         ),
                                       SizedBox(width: screenWidth * 0.026),
-                                      SizedBox(
-                                        child: Icon(
-                                          Icons.arrow_forward,
-                                          color: Colors.black87,
-                                          size: screenWidth * 0.08,
-                                        ),
+
+                                      // --- 修改的部分開始 ---
+                                      Column(
+                                        mainAxisSize: MainAxisSize.min, // 重要：讓 Column 高度只包住內容，避免撐開整列
+                                        children: [
+                                          SizedBox(height: 15),
+                                          Icon(
+                                            Icons.arrow_forward,
+                                            color: Colors.black87,
+                                            size: screenWidth * 0.08,
+                                          ),
+                                          SizedBox(height: 15),
+                                          Text(
+                                            "${_totalBodyPosturePoints.toString().replaceAll(".0", "")}分", // 這裡填入你的數字變數
+                                            style: TextStyle(
+                                              fontSize: screenWidth * 0.05, // 建議設定字體大小
+                                              color: Colors.black45,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
                                       ),
+                                      // --- 修改的部分結束 ---
+
                                       SizedBox(width: screenWidth * 0.026),
                                       if (_endPosture.isNotEmpty)
                                         SizedBox(
