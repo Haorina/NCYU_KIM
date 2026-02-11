@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'dart:convert';
 import 'package:camera/camera.dart';
 import 'package:video_player/video_player.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -25,6 +26,7 @@ class BPRResult extends StatefulWidget {
     this.totalAdditionalPoints = 0.0,
     this.startPosture = "",
     this.endPosture = "",
+    this.poseChangesFine = const <String>[],
     this.userName,
     this.reRecord,
   });
@@ -39,6 +41,10 @@ class BPRResult extends StatefulWidget {
   final double totalBodyPosturePoints;
   final String startPosture;
   final String endPosture;
+
+  // ✅ 新增：fine 姿勢變化序列（例如：['A1','A3-1',...] 或 ['1','3-1',...]）
+  final List<String> poseChangesFine;
+
   final String? userName;
   final bool? reRecord;
 
@@ -59,6 +65,7 @@ Future<void> _saveBodyPosturePoints(
     double totalBodyPosturePoints,
     String startPosture,
     String endPosture,
+    List<String> poseChangesFine,
     ) async {
   if (userName == null || userName.isEmpty) return;
 
@@ -73,6 +80,7 @@ Future<void> _saveBodyPosturePoints(
   await prefs.setDouble("${userName}_LHC_TotalBodyPosturePoints", totalBodyPosturePoints);
   await prefs.setString("${userName}_LHC_StartPosture", startPosture);
   await prefs.setString("${userName}_LHC_EndPosture", endPosture);
+  await prefs.setString("${userName}_LHC_PoseChangesFine", jsonEncode(poseChangesFine));
 }
 
 Widget square(double width, double height) {
@@ -237,6 +245,9 @@ class _BPRResultState extends State<BPRResult> {
   late String _endPosture;
   late String _videoPath;
 
+  // ✅ 新增：fine 序列
+  List<String> _poseChangesFine = <String>[];
+
   Future<void> initCameras() async {
     try {
       camera = await availableCameras();
@@ -292,7 +303,153 @@ class _BPRResultState extends State<BPRResult> {
       _totalAdditionalPoints = prefs.getDouble("${prefix}TotalAdditionalPoints") ?? 0.0;
       _startPosture = prefs.getString("${prefix}StartPosture") ?? "";
       _endPosture = prefs.getString("${prefix}EndPosture") ?? "";
+      final String poseJson = prefs.getString("${prefix}PoseChangesFine") ?? "[]";
+      final List<dynamic> raw = jsonDecode(poseJson) as List<dynamic>;
+      _poseChangesFine = raw.map((e) => e.toString()).toList();
     });
+  }
+
+  // ---------------------------
+  // ✅ 姿勢序列：圖檔路徑 + 分數（用 coarse poseScores 估算）
+  // 你的序列可能長這樣：A1 / A3-1 / A4-2 ...（前面有 A）
+  // 也可能是：1 / 3-1 / 4-2 ...（沒有 A）
+  // ---------------------------
+  String _normalizeFine(String fine) {
+    final s = fine.trim();
+    if (s.startsWith('A') || s.startsWith('a')) {
+      return s.substring(1);
+    }
+    return s;
+  }
+
+  int _coarseFromFine(String fine) {
+    final normalized = _normalizeFine(fine); // "3-1" or "1"
+    final parts = normalized.split('-');
+    return int.tryParse(parts.first.trim()) ?? 1;
+  }
+
+  int _poseScoreFromFineTransition(String fromFine, String toFine) {
+    final int a0 = _coarseFromFine(fromFine);
+    final int b0 = _coarseFromFine(toFine);
+    final int a = a0 <= b0 ? a0 : b0;
+    final int b = a0 <= b0 ? b0 : a0;
+
+    const scores = <String, int>{
+      '1-1': 0,
+      '1-2': 3,
+      '1-3': 3,
+      '1-4': 7,
+      '1-5': 9,
+      '2-2': 5,
+      '2-3': 5,
+      '2-4': 10,
+      '2-5': 13,
+      '3-3': 5,
+      '3-4': 10,
+      '3-5': 13,
+      '4-4': 15,
+      '4-5': 18,
+      '5-5': 20,
+    };
+
+    return scores["$a-$b"] ?? 0;
+  }
+
+  String _poseAsset(String fine) {
+    final s = fine.trim();
+    if (s.startsWith('A') || s.startsWith('a')) {
+      return "assets/images/$s.png";
+    }
+    return "assets/images/A$s.png";
+  }
+
+  Widget _buildPoseSequenceList(double screenWidth, double screenHeight) {
+    // 這個 function 只會在需要顯示序列時才被呼叫（外層已判斷）
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.only(
+        left: screenWidth * 0.04,
+        right: screenWidth * 0.04,
+        top: screenHeight * 0.015,
+        bottom: screenHeight * 0.015,
+      ),
+      itemCount: _poseChangesFine.length - 1,
+      separatorBuilder: (_, __) => SizedBox(height: screenHeight * 0.012),
+      itemBuilder: (context, index) {
+        final from = _poseChangesFine[index];
+        final to = _poseChangesFine[index + 1];
+        final score = _poseScoreFromFineTransition(from, to);
+
+        return Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: screenWidth * 0.03,
+            vertical: screenHeight * 0.012,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(width: 1, color: const Color(0xFFE5E5E5)),
+          ),
+          child: Row(
+            children: [
+              SizedBox(
+                width: screenWidth * 0.16,
+                height: screenWidth * 0.16,
+                child: Image.asset(
+                  _poseAsset(from),
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image),
+                ),
+              ),
+              SizedBox(width: screenWidth * 0.02),
+              Icon(Icons.arrow_forward, size: screenWidth * 0.06, color: Colors.black54),
+              SizedBox(width: screenWidth * 0.02),
+              SizedBox(
+                width: screenWidth * 0.16,
+                height: screenWidth * 0.16,
+                child: Image.asset(
+                  _poseAsset(to),
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image),
+                ),
+              ),
+              SizedBox(width: screenWidth * 0.03),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "第 ${index + 1} 段",
+                      style: TextStyle(
+                        fontSize: screenWidth * 0.04,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                "$score",
+                style: TextStyle(
+                  fontSize: screenWidth * 0.05,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black54,
+                ),
+              ),
+              Text(
+                " 分",
+                style: TextStyle(
+                  fontSize: screenWidth * 0.04,
+                  color: Colors.black54,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -309,6 +466,8 @@ class _BPRResultState extends State<BPRResult> {
     _startPosture = widget.startPosture;
     _endPosture = widget.endPosture;
     _videoPath = widget.videoPath;
+
+    _poseChangesFine = List<String>.from(widget.poseChangesFine);
 
     initCameras();
     _initializeVideoPlayer(_videoPath);
@@ -328,6 +487,7 @@ class _BPRResultState extends State<BPRResult> {
         widget.totalBodyPosturePoints,
         widget.startPosture,
         widget.endPosture,
+        widget.poseChangesFine,
       );
     }
 
@@ -347,14 +507,14 @@ class _BPRResultState extends State<BPRResult> {
     double screenHeight = MediaQuery.sizeOf(context).height;
     double screenWidth = MediaQuery.sizeOf(context).width;
 
+    final bool showPoseSequenceBlock = _poseChangesFine.length > 2;
+
     Widget buildVideoPreview() {
       if (_isInitialized && _controller.value.isInitialized) {
         return SizedBox(
           width: screenWidth * 0.66,
           child: AspectRatio(
-            aspectRatio: _controller.value.aspectRatio > 0
-                ? _controller.value.aspectRatio
-                : 1.0,
+            aspectRatio: _controller.value.aspectRatio > 0 ? _controller.value.aspectRatio : 1.0,
             child: VideoPlayer(_controller),
           ),
         );
@@ -421,8 +581,7 @@ class _BPRResultState extends State<BPRResult> {
                   screenHeight: screenHeight,
                 ),
                 ScoreBar(
-                  labelText:
-                  "總分 : ${_totalBodyPosturePoints.toString().replaceAll(".0", "")} / 26 分",
+                  labelText: "總分 : ${_totalBodyPosturePoints.toString().replaceAll(".0", "")} / 26 分",
                   currentScore: _totalBodyPosturePoints,
                   textSize: screenWidth * 0.038,
                   maxScore: 26,
@@ -434,6 +593,7 @@ class _BPRResultState extends State<BPRResult> {
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
+                        // 影片預覽
                         Container(
                           width: screenWidth * 0.8,
                           margin: EdgeInsets.only(top: screenHeight * 0.01),
@@ -482,6 +642,7 @@ class _BPRResultState extends State<BPRResult> {
                         ),
                         SizedBox(height: screenHeight * 0.03),
 
+                        // 最高風險姿勢
                         Container(
                           width: screenWidth * 0.9,
                           height: screenHeight * 0.26,
@@ -508,7 +669,7 @@ class _BPRResultState extends State<BPRResult> {
                                   bottom: screenHeight * 0.012,
                                 ),
                                 child: Text(
-                                  "姿勢變化",
+                                  "最高風險姿勢",
                                   style: TextStyle(
                                     fontSize: screenWidth * 0.048,
                                     fontWeight: FontWeight.w500,
@@ -539,10 +700,8 @@ class _BPRResultState extends State<BPRResult> {
                                           ),
                                         ),
                                       SizedBox(width: screenWidth * 0.026),
-
-                                      // --- 修改的部分開始 ---
                                       Column(
-                                        mainAxisSize: MainAxisSize.min, // 重要：讓 Column 高度只包住內容，避免撐開整列
+                                        mainAxisSize: MainAxisSize.min,
                                         children: [
                                           SizedBox(height: 15),
                                           Icon(
@@ -552,17 +711,15 @@ class _BPRResultState extends State<BPRResult> {
                                           ),
                                           SizedBox(height: 15),
                                           Text(
-                                            "${_totalBodyPosturePoints.toString().replaceAll(".0", "")}分", // 這裡填入你的數字變數
+                                            "${(_totalBodyPosturePoints-_totalAdditionalPoints).toString().replaceAll(".0", "")}分",
                                             style: TextStyle(
-                                              fontSize: screenWidth * 0.05, // 建議設定字體大小
+                                              fontSize: screenWidth * 0.05,
                                               color: Colors.black45,
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
                                         ],
                                       ),
-                                      // --- 修改的部分結束 ---
-
                                       SizedBox(width: screenWidth * 0.026),
                                       if (_endPosture.isNotEmpty)
                                         SizedBox(
@@ -580,6 +737,55 @@ class _BPRResultState extends State<BPRResult> {
                             ],
                           ),
                         ),
+
+                        // ✅ 只有在序列 >= 2 才顯示「姿勢變化序列」整塊
+                        if (showPoseSequenceBlock) ...[
+                          SizedBox(height: screenHeight * 0.03),
+                          Container(
+                            width: screenWidth * 0.9,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(width: 1, color: Colors.white),
+                              boxShadow: const [
+                                BoxShadow(
+                                  offset: Offset(0, 0),
+                                  blurRadius: 1,
+                                  spreadRadius: 1,
+                                  color: Color(0x10000000),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              children: [
+                                Container(
+                                  alignment: Alignment.centerLeft,
+                                  margin: EdgeInsets.only(
+                                    top: screenHeight * 0.012,
+                                    left: screenWidth * 0.056,
+                                    bottom: screenHeight * 0.012,
+                                  ),
+                                  child: Text(
+                                    "姿勢變化序列",
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.048,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  height: screenHeight * 0.001,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFC2C2C2),
+                                  ),
+                                ),
+                                _buildPoseSequenceList(screenWidth, screenHeight),
+                              ],
+                            ),
+                          ),
+                        ],
+
                         SizedBox(height: screenHeight * 0.03),
 
                         // 額外加分項標題
@@ -599,20 +805,20 @@ class _BPRResultState extends State<BPRResult> {
                           ),
                         ),
 
-                        // 動態列表生成 (包含排序功能)
                         Builder(
                           builder: (context) {
-                            // 1. 定義所有項目的資料結構
                             List<Map<String, dynamic>> items = [
                               {
                                 "score": _twistOrLeanPoints,
-                                "title":
-                                _twistOrLeanPoints < 1 ? "軀幹不常扭轉、側傾" :
-                                _twistOrLeanPoints < 2 ? "軀幹偶爾扭轉、側傾":
-                                _twistOrLeanPoints < 3 ? "軀幹有時扭轉、側傾":"軀幹經常扭轉、側傾",
+                                "title": _twistOrLeanPoints < 1
+                                    ? "軀幹不常扭轉、側傾"
+                                    : _twistOrLeanPoints < 2
+                                    ? "軀幹偶爾扭轉、側傾"
+                                    : _twistOrLeanPoints < 3
+                                    ? "軀幹有時扭轉、側傾"
+                                    : "軀幹經常扭轉、側傾",
                                 "maxScore": "3",
                                 "img": "assets/images/leanAndTwist.png",
-                                // 參數對應: imgWidth, imgHeight, imgOffsetTop, imgOffsetLeft (係數 x screenWidth 或 screenHeight)
                                 "w_factor": 0.34,
                                 "h_factor": 0.34,
                                 "top_factor": -0.1,
@@ -620,9 +826,11 @@ class _BPRResultState extends State<BPRResult> {
                               },
                               {
                                 "score": _distanceOfBodyCenterPoints,
-                                "title":
-                                _distanceOfBodyCenterPoints< 1 ? "手部不常遠離身體中心" :
-                                _distanceOfBodyCenterPoints < 3 ? "手部偶爾遠離身體中心":"手部經常遠離身體中心",
+                                "title": _distanceOfBodyCenterPoints < 1
+                                    ? "手部不常遠離身體中心"
+                                    : _distanceOfBodyCenterPoints < 3
+                                    ? "手部偶爾遠離身體中心"
+                                    : "手部經常遠離身體中心",
                                 "maxScore": "2",
                                 "img": "assets/images/distance_body_center.png",
                                 "w_factor": 0.33,
@@ -632,9 +840,11 @@ class _BPRResultState extends State<BPRResult> {
                               },
                               {
                                 "score": _armLiftPoints,
-                                "title":
-                                _armLiftPoints == 0 ? "手臂不常抬舉" :
-                                _armLiftPoints < 1 ? "手臂偶爾抬舉":"手臂經常抬舉",
+                                "title": _armLiftPoints == 0
+                                    ? "手臂不常抬舉"
+                                    : _armLiftPoints < 1
+                                    ? "手臂偶爾抬舉"
+                                    : "手臂經常抬舉",
                                 "maxScore": "3",
                                 "img": "assets/images/arm_lift.png",
                                 "w_factor": 0.3,
@@ -644,9 +854,11 @@ class _BPRResultState extends State<BPRResult> {
                               },
                               {
                                 "score": _aboveShoulderPoints,
-                                "title":
-                                _aboveShoulderPoints< 1 ? "雙手不常高舉過肩" :
-                                _aboveShoulderPoints < 2 ? "雙手偶爾高舉過肩":"雙手經常高舉過肩",
+                                "title": _aboveShoulderPoints < 1
+                                    ? "雙手不常高舉過肩"
+                                    : _aboveShoulderPoints < 2
+                                    ? "雙手偶爾高舉過肩"
+                                    : "雙手經常高舉過肩",
                                 "maxScore": "3",
                                 "img": "assets/images/above_shoulder.png",
                                 "w_factor": 0.34,
@@ -656,10 +868,9 @@ class _BPRResultState extends State<BPRResult> {
                               },
                             ];
 
-                            // 2. 進行排序：分數高的排前面 (降冪排序)
-                            items.sort((a, b) => (b['score'] as double).compareTo(a['score'] as double));
+                            items.sort((a, b) =>
+                                (b['score'] as double).compareTo(a['score'] as double));
 
-                            // 3. 遍歷列表生成 UI
                             return Column(
                               children: List.generate(items.length, (index) {
                                 final item = items[index];
@@ -669,7 +880,6 @@ class _BPRResultState extends State<BPRResult> {
                                     return Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
-                                        // 傳入 index 確保左側裝飾的顏色交替規律
                                         additionalPointCardDecoration(screenWidth, screenHeight, index),
                                         additionalPointCard(
                                           screenWidth,

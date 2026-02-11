@@ -39,7 +39,6 @@ class _BPRVideoAnalysingState extends State<BPRVideoAnalysing> {
   @override
   void initState() {
     super.initState();
-    // 初始化 currentUser，確保如果是 null 會自動使用訪客 ID
     currentUser = widget.userName ?? "vJ#CA:F3zP)C]A=V";
   }
 
@@ -56,19 +55,18 @@ class _BPRVideoAnalysingState extends State<BPRVideoAnalysing> {
       final result = await platform.invokeMethod('processVideo', {'videoPath': widget.videoPath});
 
       if (result != null && result is Map && result['total_score'] != null) {
+        final List<String> poseChangesFine = (result['pose_changes_fine'] as List?)
+            ?.map((e) => e.toString())
+            .toList() ??
+            <String>[];
+
         if (mounted) {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
               builder: (context) => BPRResult(
-                // 🔥 修正關鍵：這裡必須傳遞 currentUser，而不是 widget.userName
-                // 這樣 BPRResult 才會收到正確的訪客 ID，進而觸發存檔邏輯
                 userName: currentUser,
-
-                // 傳遞 reRecord 狀態 (通常從錄影頁過來是 true)
                 reRecord: widget.reRecord,
-
-                // 解析回傳的數據
                 twistOrLeanPoints: (result['twistAndLanternal'] ?? 0.0).toDouble(),
                 distanceOfBodyCenterPoints: (result['distance of body'] ?? 0.0).toDouble(),
                 armLiftPoints: (result['arm raise'] ?? 0.0).toDouble(),
@@ -79,6 +77,9 @@ class _BPRVideoAnalysingState extends State<BPRVideoAnalysing> {
                 videoPath: widget.videoPath,
                 startPosture: poseImageMap[(result['start'] ?? '').toString()] ?? '1',
                 endPosture: poseImageMap[(result['end'] ?? '').toString()] ?? '1',
+
+                // ✅ 新增：把序列丟去結果頁
+                poseChangesFine: poseChangesFine,
               ),
             ),
           );
